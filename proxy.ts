@@ -11,11 +11,21 @@ const publicRoutes = [
   '/pricing',
   '/features'
 ]
+
 export default function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
-  console.log("proxy - Requested Path:", pathname)
+  // Always allow API routes
   if (pathname.startsWith('/api/')) {
+    return NextResponse.next()
+  }
+
+  // Allow static files and images
+  if (
+    pathname.startsWith('/_next/') ||
+    pathname.startsWith('/favicon') ||
+    pathname.includes('.')
+  ) {
     return NextResponse.next()
   }
 
@@ -29,7 +39,6 @@ export default function middleware(request: NextRequest) {
 
   // Redirect unauthenticated users to login
   if (!token) {
-    console.log("proxy - No session token found, redirecting to /login")
     return NextResponse.redirect(new URL("/login", request.url))
   }
 
@@ -37,5 +46,7 @@ export default function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|public).*)"],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
 }

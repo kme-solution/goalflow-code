@@ -31,24 +31,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const login = async (email: string, password: string) => {
-    console.log("[v0] Auth provider login called for:", email)
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       })
-      console.log("[v0] Login API response status:", response.status)
 
       let data: any
       let text: string = ''
       try {
         text = await response.text()
-        console.log("[v0] Raw response text:", text.slice(0, 200))
         data = JSON.parse(text)
-        console.log("[v0] Parsed login response:", { success: data.success, hasUser: !!data.user, hasToken: !!data.token })
       } catch (jsonError) {
-        console.error("[v0] Login error: Non-JSON response", text)
+        console.error("Login error: Non-JSON response", text)
         return { success: false, error: `Unexpected response: ${text ? text.slice(0, 100) : String(jsonError)}` }
       }
 

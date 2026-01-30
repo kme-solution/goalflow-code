@@ -3,14 +3,12 @@ import { MOCK_USERS } from "@/lib/mock-data/users"
 import type { LoginRequest, LoginResponse } from "@/lib/types/auth.types"
 
 export async function POST(request: NextRequest) {
-  console.log("[v0] Login API route called")
   try {
     let body: LoginRequest = {} as LoginRequest;
     try {
       body = await request.json();
-      console.log("[v0] Parsed request body successfully")
     } catch (parseError) {
-      console.error("[v0] Request body parse error:", parseError);
+      console.error("Request body parse error:", parseError);
       return NextResponse.json<LoginResponse>(
         {
           success: false,
@@ -21,7 +19,6 @@ export async function POST(request: NextRequest) {
     }
 
     const { email, password } = body;
-    console.log("[v0] Login attempt - email:", email);
     if (!email || !password) {
       return NextResponse.json<LoginResponse>(
         {
@@ -32,7 +29,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("[v0] Looking for user with email:", email);
+    
 
     // Find user in mock data
     const user = MOCK_USERS.find((u) => u.email === email && u.password === password);
@@ -53,7 +50,7 @@ export async function POST(request: NextRequest) {
     // Generate token (mock)
     const token = btoa(JSON.stringify({ userId: user.id, timestamp: Date.now() }));
 
-    console.log("[v0] Login successful for user:", user.id);
+    
 
     const response = NextResponse.json<LoginResponse>({
       success: true,
