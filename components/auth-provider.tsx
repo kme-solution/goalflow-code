@@ -31,24 +31,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const login = async (email: string, password: string) => {
+    console.log("[v0] AuthProvider login called with email:", email)
     try {
+      console.log("[v0] Calling /api/auth/login...")
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       })
+      console.log("[v0] Response status:", response.status)
 
       let data: any
       let text: string = ''
       try {
         text = await response.text()
+        console.log("[v0] Response text:", text.substring(0, 300))
         data = JSON.parse(text)
+        console.log("[v0] Parsed data success:", data.success)
       } catch (jsonError) {
-        console.error("Login error: Non-JSON response", text)
+        console.error("[v0] Login error: Non-JSON response", text)
         return { success: false, error: `Unexpected response: ${text ? text.slice(0, 100) : String(jsonError)}` }
       }
 
       if (data.success && data.user && data.token) {
+        console.log("[v0] Login successful, setting session...")
         const session = {
           user: data.user,
           token: data.token,
@@ -56,12 +62,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         setSession(session)
         setUser(data.user)
+        console.log("[v0] Session set, returning success")
         return { success: true }
       }
 
+      console.log("[v0] Login failed:", data.error)
       return { success: false, error: data.error || "Login failed" }
     } catch (error) {
-      console.error("Login error:", error)
+      console.error("[v0] Login error:", error)
       return { success: false, error: "An error occurred during login" }
     }
   }

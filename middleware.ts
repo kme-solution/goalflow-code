@@ -1,18 +1,7 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-const publicRoutes = [
-  '/',
-  '/login',
-  '/register',
-  '/forgot-password',
-  '/public',
-  '/docs',
-  '/pricing',
-  '/features'
-]
-
-export default function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // Always allow API routes
@@ -20,7 +9,7 @@ export default function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Allow static files and images
+  // Allow static files
   if (
     pathname.startsWith('/_next/') ||
     pathname.startsWith('/favicon') ||
@@ -29,8 +18,9 @@ export default function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Allow public routes
-  if (publicRoutes.some(route => pathname === route || pathname.startsWith(route + "/"))) {
+  // Public routes that don't need authentication
+  const publicRoutes = ['/', '/login', '/register', '/forgot-password']
+  if (publicRoutes.includes(pathname)) {
     return NextResponse.next()
   }
 
@@ -46,7 +36,5 @@ export default function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 }
