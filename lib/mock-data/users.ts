@@ -1,0 +1,57 @@
+import type { User } from "@/lib/types/auth.types"
+
+export const MOCK_USERS: User[] = [
+
+  {
+    id: "exec-001",
+    email: "ceo@goalflow.com",
+    password: "password123",
+    name: "David Williams",
+    role: "ceo",
+    department: "CEO",
+    title: "Chief CEO Officer",
+    avatar: "/diverse-ceo-group.png",
+  },
+  {
+    id: "hr-001",
+    email: "hr@goalflow.com",
+    password: "password123",
+    name: "Sarah Johnson",
+    role: "hr_admin",
+    department: "Human Resources",
+    title: "HR Director",
+    avatar: "/hr-director.jpg",
+  },
+  {
+    id: "mgr-001",
+    email: "manager@goalflow.com",
+    password: "password123",
+    name: "Michael Chen",
+    role: "manager",
+    department: "Engineering",
+    title: "Engineering Manager",
+    avatar: "/engineering-manager.png",
+  },
+  {
+    id: "emp-001",
+    email: "employee@goalflow.com",
+    password: "password123",
+    name: "Emily Rodriguez",
+    role: "employee",
+    department: "Engineering",
+    title: "Senior Software Engineer",
+    managerId: "mgr-001",
+    avatar: "/software-engineer-workspace.png",
+  },
+  {
+    id: "lead-001",
+    email: "teamlead@goalflow.com",
+    password: "password123",
+    name: "James Martinez",
+    role: "team_lead",
+    department: "Engineering",
+    title: "Tech Lead",
+    managerId: "mgr-001",
+    avatar: "/tech-lead.png",
+  },
+]
