@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { DatePicker } from "@/components/ui/date-picker"
 
 interface GoalFormProps {
   onSubmit: (data: GoalFormData) => void
@@ -42,9 +43,16 @@ export default function GoalForm({ onSubmit, onCancel, isLoading }: GoalFormProp
     unit: "",
   })
 
+  const [startDate, setStartDate] = useState<Date | undefined>(new Date())
+  const [dueDate, setDueDate] = useState<Date | undefined>(undefined)
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(formData)
+    onSubmit({
+      ...formData,
+      startDate: startDate ? startDate.toISOString().split("T")[0] : "",
+      dueDate: dueDate ? dueDate.toISOString().split("T")[0] : "",
+    })
   }
 
   return (
@@ -115,23 +123,21 @@ export default function GoalForm({ onSubmit, onCancel, isLoading }: GoalFormProp
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="startDate">Start Date</Label>
-          <Input
+          <DatePicker
             id="startDate"
-            type="date"
-            value={formData.startDate}
-            onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-            required
+            date={startDate}
+            onDateChange={setStartDate}
+            placeholder="Select start date"
           />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="dueDate">Due Date</Label>
-          <Input
+          <DatePicker
             id="dueDate"
-            type="date"
-            value={formData.dueDate}
-            onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-            required
+            date={dueDate}
+            onDateChange={setDueDate}
+            placeholder="Select due date"
           />
         </div>
       </div>
@@ -168,7 +174,7 @@ export default function GoalForm({ onSubmit, onCancel, isLoading }: GoalFormProp
         <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isLoading}>
+        <Button type="submit" disabled={isLoading || !dueDate}>
           {isLoading ? "Creating..." : "Create Goal"}
         </Button>
       </div>
