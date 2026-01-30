@@ -11,7 +11,7 @@ const publicRoutes = [
   '/pricing',
   '/features'
 ]
-export function proxy(request: NextRequest) {
+export default function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   console.log("proxy - Requested Path:", pathname)
