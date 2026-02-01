@@ -269,12 +269,15 @@ export function GoalEditDialog({
                   Aligned to
                 </div>
               </Label>
-              <Select value={parentGoalId} onValueChange={setParentGoalId}>
+              <Select 
+                value={parentGoalId || "none"} 
+                onValueChange={(value) => setParentGoalId(value === "none" ? "" : value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select parent goal (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {parentGoals.map((parent) => (
                     <SelectItem key={parent.id} value={parent.id}>
                       {parent.title}
