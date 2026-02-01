@@ -74,20 +74,21 @@ export function GoalEditDialog({
   const [dueDate, setDueDate] = useState<Date | undefined>()
   const [parentGoalId, setParentGoalId] = useState<string>("")
 
-  // Reset form when goal changes
+  // Reset form when goal changes or dialog opens
   useEffect(() => {
-    if (goal) {
+    if (goal && open) {
       setTitle(goal.title)
       setDescription(goal.description)
       setStatus(goal.status)
       setProgress(goal.progress)
       setPriority(goal.priority)
       setDueDate(goal.dueDate ? new Date(goal.dueDate) : undefined)
-      // Find parent goal ID from title
+      // Find parent goal ID from title - using parentGoals directly without it as dependency
       const parent = parentGoals.find(p => p.title === goal.parentGoal)
       setParentGoalId(parent?.id || "")
     }
-  }, [goal, parentGoals])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [goal?.id, open])
 
   const handleSave = async () => {
     if (!goal) return
