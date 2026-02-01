@@ -2,8 +2,9 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Zap, Menu } from "lucide-react"
+import { Menu } from "lucide-react"
 import { useState } from "react"
+import { Logo } from "@/components/brand/logo"
 
 export function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -13,13 +14,8 @@ export function Navigation() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 gradient-primary rounded-lg flex items-center justify-center">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-foreground">
-              goalFlow<span className="text-primary">Pro</span>
-            </span>
+          <Link href="/" className="flex items-center">
+            <Logo size="md" />
           </Link>
 
           {/* Desktop Navigation */}

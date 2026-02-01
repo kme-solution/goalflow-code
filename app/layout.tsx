@@ -10,24 +10,16 @@ import "../styles/globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "GoalFlow Pro - Performance Management Platform",
-  description: "Modern performance management and goal tracking platform for teams", 
+  title: "GoalFlow - Performance Management Platform",
+  description: "Modern performance management and goal tracking platform for teams. Set goals, track progress, and achieve results together.", 
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "GoalFlow Pro",
+    title: "GoalFlow",
   },
   icons: {
     icon: [
-      {
-        url: "/icon-light-32x32.png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/icon-dark-32x32.png",
-        media: "(prefers-color-scheme: dark)",
-      },
       {
         url: "/icon.svg",
         type: "image/svg+xml",
@@ -39,8 +31,8 @@ export const metadata: Metadata = {
 
 export const viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+    { media: "(prefers-color-scheme: light)", color: "#10b981" },
+    { media: "(prefers-color-scheme: dark)", color: "#059669" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -59,7 +51,7 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="GoalFlow Pro" />
+        <meta name="apple-mobile-web-app-title" content="GoalFlow" />
       </head>
       <body className={`${inter.className} font-sans antialiased`}>
         <ErrorBoundary>

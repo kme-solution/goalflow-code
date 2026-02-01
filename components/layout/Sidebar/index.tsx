@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/components/auth-provider';
 import { RoleBasedMenu } from './RoleBasedMenu';
+import { Logo, LogoMark } from '@/components/brand/logo';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -29,14 +30,10 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             collapsed && "justify-center"
           )}
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary-500 to-primary-600">
-            <span className="font-bold text-white text-sm">GF</span>
-          </div>
-          {!collapsed && (
-            <div className="flex flex-col">
-              <span className="font-bold tracking-tight text-white">GoalFlow</span>
-              <span className="text-xs text-sidebar-foreground/60">Pro</span>
-            </div>
+          {collapsed ? (
+            <LogoMark size="md" />
+          ) : (
+            <Logo size="md" variant="white" />
           )}
         </Link>
         
