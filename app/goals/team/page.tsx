@@ -9,15 +9,37 @@ import { GoalAlignmentView, type AlignedGoal } from "@/components/goals/GoalAlig
 import { GoalEmptyState } from "@/components/goals/GoalEmptyState"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Users } from "lucide-react"
+import { Users, Shield, Info } from "lucide-react"
+import { useGoalPermissions, getRoleDisplayInfo, type CurrentUser } from "@/lib/hooks/useGoalPermissions"
+
+// Simulated current user - in production this comes from auth context
+// Change role to test: "employee", "team_lead", "manager", "ceo", "system_admin"
+const currentUser: CurrentUser = {
+  id: "manager-1",
+  name: "Sarah Chen",
+  role: "team_lead", // Team leads can create team goals
+  teamId: "team-1",
+  managerId: "director-1",
+}
 
 // Sample team data
 const teamInfo = {
+  id: "team-1",
   name: "Engineering",
   memberCount: 12,
-  lead: "Sarah Chen",
+  lead: { id: "manager-1", name: "Sarah Chen" },
 }
+
+// Sample team members for assignment
+const teamMembers = [
+  { id: "user-1", name: "John Doe" },
+  { id: "user-2", name: "Jane Smith" },
+  { id: "user-3", name: "Mike Johnson" },
+  { id: "user-4", name: "Emily Watson" },
+  { id: "user-5", name: "Alex Rivera" },
+]
 
 // Sample team goals
 const initialGoals: GoalData[] = [
@@ -30,6 +52,7 @@ const initialGoals: GoalData[] = [
     priority: "critical",
     dueDate: "Mar 31, 2024",
     owner: "Sarah Chen",
+    ownerId: "manager-1",
     parentGoal: "Operational Excellence",
     alignedGoals: 4,
   },
@@ -42,6 +65,7 @@ const initialGoals: GoalData[] = [
     priority: "high",
     dueDate: "Feb 28, 2024",
     owner: "Mike Johnson",
+    ownerId: "user-3",
     parentGoal: "Product Innovation",
     alignedGoals: 6,
   },
@@ -54,6 +78,7 @@ const initialGoals: GoalData[] = [
     priority: "high",
     dueDate: "Apr 15, 2024",
     owner: "Alex Rivera",
+    ownerId: "user-5",
     parentGoal: "Technical Excellence",
     alignedGoals: 3,
   },
@@ -66,6 +91,7 @@ const initialGoals: GoalData[] = [
     priority: "medium",
     dueDate: "May 30, 2024",
     owner: "Emily Watson",
+    ownerId: "user-4",
     alignedGoals: 2,
   },
   {
@@ -77,29 +103,18 @@ const initialGoals: GoalData[] = [
     priority: "critical",
     dueDate: "Jan 15, 2024",
     owner: "David Kim",
+    ownerId: "user-6",
     parentGoal: "Security & Compliance",
-  },
-  {
-    id: "t6",
-    title: "Reduce API Response Time",
-    description: "Optimize API performance to achieve p95 response time under 200ms.",
-    progress: 55,
-    status: "on_track",
-    priority: "high",
-    dueDate: "Apr 30, 2024",
-    owner: "Sarah Chen",
-    parentGoal: "Product Excellence",
-    alignedGoals: 2,
   },
 ]
 
-// Sample parent goals for alignment
+// Sample parent goals (company goals) for alignment
 const parentGoals = [
-  { id: "p1", title: "Operational Excellence" },
-  { id: "p2", title: "Product Innovation" },
-  { id: "p3", title: "Technical Excellence" },
-  { id: "p4", title: "Security & Compliance" },
-  { id: "p5", title: "Product Excellence" },
+  { id: "c1", title: "Operational Excellence" },
+  { id: "c2", title: "Product Innovation" },
+  { id: "c3", title: "Technical Excellence" },
+  { id: "c4", title: "Security & Compliance" },
+  { id: "c5", title: "Customer Satisfaction" },
 ]
 
 // Sample alignment data for team
@@ -144,49 +159,12 @@ const alignmentData: AlignedGoal[] = [
       },
     ],
   },
-  {
-    id: "company-2",
-    title: "Launch Next-Gen Platform",
-    description: "Product roadmap execution",
-    progress: 72,
-    status: "on_track",
-    priority: "high",
-    level: "company",
-    children: [
-      {
-        id: "t2",
-        title: "Launch Mobile App v2.0",
-        description: "Team product delivery",
-        progress: 78,
-        status: "on_track",
-        priority: "high",
-        level: "team",
-        children: [
-          {
-            id: "p3",
-            title: "Complete UI Redesign",
-            description: "Individual contributor goal",
-            progress: 90,
-            status: "on_track",
-            priority: "high",
-            level: "personal",
-          },
-        ],
-      },
-      {
-        id: "t3",
-        title: "Migrate to Kubernetes",
-        description: "Infrastructure modernization",
-        progress: 40,
-        status: "at_risk",
-        priority: "high",
-        level: "team",
-      },
-    ],
-  },
 ]
 
 export default function TeamGoalsPage() {
+  const permissions = useGoalPermissions(currentUser)
+  const roleInfo = getRoleDisplayInfo(currentUser.role)
+  
   const [goals, setGoals] = useState<GoalData[]>(initialGoals)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
@@ -232,7 +210,10 @@ export default function TeamGoalsPage() {
             year: "numeric",
           })
         : undefined,
-      owner: teamInfo.lead,
+      owner: data.assigneeId 
+        ? teamMembers.find(m => m.id === data.assigneeId)?.name || teamInfo.lead.name
+        : teamInfo.lead.name,
+      ownerId: data.assigneeId || currentUser.id,
       parentGoal: parentGoals.find((p) => p.id === data.parentGoalId)?.title,
     }
 
@@ -280,19 +261,44 @@ export default function TeamGoalsPage() {
             {teamInfo.name} team objectives and key results
           </p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>Team Lead:</span>
-          <div className="flex items-center gap-2">
-            <Avatar className="h-6 w-6">
-              <AvatarImage src="/placeholder.svg" alt={teamInfo.lead} />
-              <AvatarFallback className="text-xs">
-                {teamInfo.lead.split(" ").map((n) => n[0]).join("")}
-              </AvatarFallback>
-            </Avatar>
-            <span className="font-medium text-foreground">{teamInfo.lead}</span>
+        <div className="flex flex-col items-start gap-2 sm:items-end">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>Team Lead:</span>
+            <div className="flex items-center gap-2">
+              <Avatar className="h-6 w-6">
+                <AvatarImage src="/placeholder.svg" alt={teamInfo.lead.name} />
+                <AvatarFallback className="text-xs">
+                  {teamInfo.lead.name.split(" ").map((n) => n[0]).join("")}
+                </AvatarFallback>
+              </Avatar>
+              <span className="font-medium text-foreground">{teamInfo.lead.name}</span>
+            </div>
           </div>
+          <Badge variant="outline" className="gap-1.5">
+            <Shield className="h-3 w-3" />
+            Your role: {roleInfo.label}
+          </Badge>
         </div>
       </div>
+
+      {/* Permission Info */}
+      {!permissions.canCreateTeamGoals && (
+        <Alert className="border-amber-500/20 bg-amber-500/5">
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            Team goals can only be created by Managers or Team Leads. You can view and track progress on goals assigned to you.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {permissions.canCreateTeamGoals && (
+        <Alert className="border-primary/20 bg-primary/5">
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            As a {roleInfo.label}, you can create team goals and assign them to team members. Goals you create will cascade to individual contributors.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Stats Overview */}
       <GoalStats
@@ -302,12 +308,17 @@ export default function TeamGoalsPage() {
         averageProgress={stats.avgProgress}
       />
 
-      {/* Inline Goal Creator */}
-      <InlineGoalCreator
-        onCreateGoal={handleCreateGoal}
-        parentGoals={parentGoals}
-        placeholder="Add a new team goal..."
-      />
+      {/* Inline Goal Creator - Only for managers/team leads */}
+      {permissions.canCreateTeamGoals && (
+        <InlineGoalCreator
+          onCreateGoal={handleCreateGoal}
+          parentGoals={parentGoals}
+          placeholder="Add a new team goal..."
+          showAssignee={true}
+          assignees={teamMembers}
+          showAlignmentSuggestion={true}
+        />
+      )}
 
       {/* Filters */}
       <GoalFilters
@@ -327,11 +338,13 @@ export default function TeamGoalsPage() {
           title={goals.length === 0 ? "No team goals yet" : "No matching goals"}
           description={
             goals.length === 0
-              ? "Create your first team goal to start tracking collective progress."
+              ? permissions.canCreateTeamGoals
+                ? "Create your first team goal to start tracking collective progress."
+                : "Your team lead will add goals here. Check back soon!"
               : "Try adjusting your filters or search query to find what you're looking for."
           }
-          actionLabel="Create Team Goal"
-          onAction={goals.length === 0 ? () => {} : undefined}
+          actionLabel={permissions.canCreateTeamGoals ? "Create Team Goal" : undefined}
+          onAction={goals.length === 0 && permissions.canCreateTeamGoals ? () => {} : undefined}
         />
       ) : viewMode === "alignment" ? (
         <GoalAlignmentView
@@ -349,6 +362,8 @@ export default function TeamGoalsPage() {
               onDelete={handleDeleteGoal}
               onArchive={handleArchiveGoal}
               onUpdateProgress={handleUpdateProgress}
+              canEdit={permissions.canUpdateGoal(goal.ownerId || "", currentUser.id)}
+              canDelete={permissions.canDeleteGoal(goal.ownerId || "")}
             />
           ))}
         </Card>
@@ -362,6 +377,8 @@ export default function TeamGoalsPage() {
               onDelete={handleDeleteGoal}
               onArchive={handleArchiveGoal}
               onUpdateProgress={handleUpdateProgress}
+              canEdit={permissions.canUpdateGoal(goal.ownerId || "", currentUser.id)}
+              canDelete={permissions.canDeleteGoal(goal.ownerId || "")}
             />
           ))}
         </div>

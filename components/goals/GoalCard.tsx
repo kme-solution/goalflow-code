@@ -25,6 +25,8 @@ import {
   Target,
   Link2,
   CheckCircle2,
+  Info,
+  UserCheck,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -40,6 +42,8 @@ export interface GoalData {
   priority: GoalPriority
   dueDate?: string
   owner?: string
+  ownerId?: string
+  assignedBy?: string
   parentGoal?: string
   alignedGoals?: number
 }
@@ -52,6 +56,8 @@ interface GoalCardProps {
   onUpdateProgress?: (goalId: string, progress: number) => void
   variant?: "card" | "list"
   className?: string
+  canEdit?: boolean
+  canDelete?: boolean
 }
 
 const statusConfig: Record<GoalStatus, { label: string; className: string }> = {
@@ -76,6 +82,8 @@ export function GoalCard({
   onUpdateProgress,
   variant = "card",
   className,
+  canEdit = true,
+  canDelete = true,
 }: GoalCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isEditingProgress, setIsEditingProgress] = useState(false)
@@ -119,15 +127,17 @@ export function GoalCard({
           <span className="w-10 text-right text-sm font-medium">{goal.progress}%</span>
         </div>
         <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0"
-            onClick={() => handleQuickProgress(10)}
-            aria-label="Increase progress"
-          >
-            <ChevronUp className="h-4 w-4" />
-          </Button>
+          {canEdit && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => handleQuickProgress(10)}
+              aria-label="Increase progress"
+            >
+              <ChevronUp className="h-4 w-4" />
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -135,22 +145,36 @@ export function GoalCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit?.(goal)}>
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onArchive?.(goal.id)}>
-                <Archive className="mr-2 h-4 w-4" />
-                Archive
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onClick={() => onDelete?.(goal.id)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
+              {canEdit && (
+                <DropdownMenuItem onClick={() => onEdit?.(goal)}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+              )}
+              {canEdit && (
+                <DropdownMenuItem onClick={() => onArchive?.(goal.id)}>
+                  <Archive className="mr-2 h-4 w-4" />
+                  Archive
+                </DropdownMenuItem>
+              )}
+              {canDelete && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onClick={() => onDelete?.(goal.id)}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </>
+              )}
+              {!canEdit && !canDelete && (
+                <DropdownMenuItem disabled>
+                  <Info className="mr-2 h-4 w-4" />
+                  View only
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -181,22 +205,36 @@ export function GoalCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit?.(goal)}>
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit Goal
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onArchive?.(goal.id)}>
-                <Archive className="mr-2 h-4 w-4" />
-                Archive
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onClick={() => onDelete?.(goal.id)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
+              {canEdit && (
+                <DropdownMenuItem onClick={() => onEdit?.(goal)}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit Goal
+                </DropdownMenuItem>
+              )}
+              {canEdit && (
+                <DropdownMenuItem onClick={() => onArchive?.(goal.id)}>
+                  <Archive className="mr-2 h-4 w-4" />
+                  Archive
+                </DropdownMenuItem>
+              )}
+              {canDelete && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onClick={() => onDelete?.(goal.id)}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </>
+              )}
+              {!canEdit && !canDelete && (
+                <DropdownMenuItem disabled>
+                  <Info className="mr-2 h-4 w-4" />
+                  View only
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -215,7 +253,7 @@ export function GoalCard({
         <div className="mt-4">
           <div className="mb-2 flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Progress</span>
-            {isEditingProgress ? (
+            {canEdit && isEditingProgress ? (
               <div className="flex items-center gap-1">
                 <Input
                   type="number"
@@ -232,37 +270,41 @@ export function GoalCard({
                   <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                 </Button>
               </div>
-            ) : (
+            ) : canEdit ? (
               <button
                 onClick={() => setIsEditingProgress(true)}
                 className="text-sm font-semibold hover:text-primary"
               >
                 {goal.progress}%
               </button>
+            ) : (
+              <span className="text-sm font-semibold">{goal.progress}%</span>
             )}
           </div>
           <div className="flex items-center gap-2">
             <Progress value={goal.progress} className="h-2 flex-1" />
-            <div className="flex items-center gap-0.5">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-6 w-6 p-0"
-                onClick={() => handleQuickProgress(-10)}
-                aria-label="Decrease progress"
-              >
-                <ChevronDown className="h-3 w-3" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-6 w-6 p-0"
-                onClick={() => handleQuickProgress(10)}
-                aria-label="Increase progress"
-              >
-                <ChevronUp className="h-3 w-3" />
-              </Button>
-            </div>
+            {canEdit && (
+              <div className="flex items-center gap-0.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 w-6 p-0"
+                  onClick={() => handleQuickProgress(-10)}
+                  aria-label="Decrease progress"
+                >
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 w-6 p-0"
+                  onClick={() => handleQuickProgress(10)}
+                  aria-label="Increase progress"
+                >
+                  <ChevronUp className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -278,6 +320,12 @@ export function GoalCard({
             <span className="flex items-center gap-1">
               <User className="h-3 w-3" />
               {goal.owner}
+            </span>
+          )}
+          {goal.assignedBy && (
+            <span className="flex items-center gap-1">
+              <UserCheck className="h-3 w-3" />
+              Assigned by {goal.assignedBy}
             </span>
           )}
           {goal.parentGoal && (

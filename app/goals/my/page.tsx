@@ -8,11 +8,25 @@ import { InlineGoalCreator, type NewGoalData } from "@/components/goals/InlineGo
 import { GoalAlignmentView, type AlignedGoal } from "@/components/goals/GoalAlignmentView"
 import { GoalEmptyState } from "@/components/goals/GoalEmptyState"
 import { Card } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { UserCircle, Target, Info } from "lucide-react"
+import { useGoalPermissions, type CurrentUser } from "@/lib/hooks/useGoalPermissions"
 
-// Sample data - in production this would come from an API
-const initialGoals: GoalData[] = [
+// Simulated current user - in production this comes from auth context
+const currentUser: CurrentUser = {
+  id: "user-1",
+  name: "John Doe",
+  role: "employee", // Change to "manager", "ceo", etc. to test different permissions
+  teamId: "team-1",
+  managerId: "manager-1",
+}
+
+// Sample assigned goals (from manager/team lead)
+const assignedGoals: GoalData[] = [
   {
-    id: "1",
+    id: "a1",
     title: "Complete Q1 Performance Review",
     description: "Finish all performance evaluations for direct reports. This includes gathering feedback, scheduling 1:1 meetings, and submitting final assessments by the end of the quarter.",
     progress: 70,
@@ -20,23 +34,12 @@ const initialGoals: GoalData[] = [
     priority: "high",
     dueDate: "Mar 31, 2024",
     owner: "You",
+    assignedBy: "Sarah Chen",
     parentGoal: "Team Development",
     alignedGoals: 2,
   },
   {
-    id: "2",
-    title: "Launch Dashboard Redesign",
-    description: "Ship the new dashboard redesign to production with improved UX and performance optimizations.",
-    progress: 85,
-    status: "on_track",
-    priority: "critical",
-    dueDate: "Feb 28, 2024",
-    owner: "You",
-    parentGoal: "Product Excellence",
-    alignedGoals: 1,
-  },
-  {
-    id: "3",
+    id: "a2",
     title: "Improve Customer Satisfaction Score",
     description: "Increase NPS score by 10 points through targeted improvements in support response time and product quality.",
     progress: 45,
@@ -44,11 +47,28 @@ const initialGoals: GoalData[] = [
     priority: "high",
     dueDate: "Apr 15, 2024",
     owner: "You",
+    assignedBy: "Sarah Chen",
     parentGoal: "Customer Success",
     alignedGoals: 0,
   },
   {
-    id: "4",
+    id: "a3",
+    title: "Complete Security Training",
+    description: "Complete all required security compliance training modules by end of quarter.",
+    progress: 100,
+    status: "completed",
+    priority: "medium",
+    dueDate: "Feb 28, 2024",
+    owner: "You",
+    assignedBy: "HR Team",
+    parentGoal: "Compliance",
+  },
+]
+
+// Sample personal goals (self-created)
+const personalGoals: GoalData[] = [
+  {
+    id: "p1",
     title: "Complete AWS Certification",
     description: "Study and pass the AWS Solutions Architect Professional certification exam.",
     progress: 30,
@@ -58,7 +78,7 @@ const initialGoals: GoalData[] = [
     owner: "You",
   },
   {
-    id: "5",
+    id: "p2",
     title: "Document API Best Practices",
     description: "Create comprehensive documentation for internal API development standards.",
     progress: 100,
@@ -67,9 +87,19 @@ const initialGoals: GoalData[] = [
     dueDate: "Jan 15, 2024",
     owner: "You",
   },
+  {
+    id: "p3",
+    title: "Learn TypeScript Advanced Patterns",
+    description: "Master advanced TypeScript patterns including generics, decorators, and type guards.",
+    progress: 55,
+    status: "on_track",
+    priority: "low",
+    dueDate: "Jun 30, 2024",
+    owner: "You",
+  },
 ]
 
-// Sample parent goals for alignment
+// Sample parent goals for alignment (from team/company goals)
 const parentGoals = [
   { id: "p1", title: "Team Development" },
   { id: "p2", title: "Product Excellence" },
@@ -98,7 +128,7 @@ const alignmentData: AlignedGoal[] = [
         level: "team",
         children: [
           {
-            id: "3",
+            id: "a2",
             title: "Improve Customer Satisfaction Score",
             description: "Personal contribution to customer success",
             progress: 45,
@@ -110,47 +140,37 @@ const alignmentData: AlignedGoal[] = [
       },
     ],
   },
-  {
-    id: "company-2",
-    title: "Launch New Product Features",
-    description: "Q1 product roadmap execution",
-    progress: 80,
-    status: "on_track",
-    priority: "high",
-    level: "company",
-    children: [
-      {
-        id: "2",
-        title: "Launch Dashboard Redesign",
-        description: "Ship the new dashboard redesign",
-        progress: 85,
-        status: "on_track",
-        priority: "critical",
-        level: "personal",
-      },
-    ],
-  },
 ]
 
 export default function MyGoalsPage() {
-  const [goals, setGoals] = useState<GoalData[]>(initialGoals)
+  const permissions = useGoalPermissions(currentUser)
+  
+  const [assignedGoalsList, setAssignedGoalsList] = useState<GoalData[]>(assignedGoals)
+  const [personalGoalsList, setPersonalGoalsList] = useState<GoalData[]>(personalGoals)
+  const [activeTab, setActiveTab] = useState<"assigned" | "personal">("assigned")
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("all")
   const [viewMode, setViewMode] = useState<ViewMode>("cards")
 
+  // Combined goals for stats
+  const allGoals = [...assignedGoalsList, ...personalGoalsList]
+  
   // Calculate stats
   const stats = useMemo(() => {
-    const total = goals.length
-    const completed = goals.filter((g) => g.status === "completed").length
-    const atRisk = goals.filter((g) => g.status === "at_risk").length
-    const avgProgress = Math.round(goals.reduce((sum, g) => sum + g.progress, 0) / total) || 0
+    const total = allGoals.length
+    const completed = allGoals.filter((g) => g.status === "completed").length
+    const atRisk = allGoals.filter((g) => g.status === "at_risk").length
+    const avgProgress = Math.round(allGoals.reduce((sum, g) => sum + g.progress, 0) / total) || 0
     return { total, completed, atRisk, avgProgress }
-  }, [goals])
+  }, [allGoals])
 
-  // Filter goals
+  // Filter goals based on active tab
+  const currentGoals = activeTab === "assigned" ? assignedGoalsList : personalGoalsList
+  const setCurrentGoals = activeTab === "assigned" ? setAssignedGoalsList : setPersonalGoalsList
+
   const filteredGoals = useMemo(() => {
-    return goals.filter((goal) => {
+    return currentGoals.filter((goal) => {
       const matchesSearch =
         goal.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         goal.description.toLowerCase().includes(searchQuery.toLowerCase())
@@ -158,7 +178,7 @@ export default function MyGoalsPage() {
       const matchesPriority = priorityFilter === "all" || goal.priority === priorityFilter
       return matchesSearch && matchesStatus && matchesPriority
     })
-  }, [goals, searchQuery, statusFilter, priorityFilter])
+  }, [currentGoals, searchQuery, statusFilter, priorityFilter])
 
   const handleCreateGoal = async (data: NewGoalData) => {
     // Simulate API call
@@ -182,11 +202,13 @@ export default function MyGoalsPage() {
       parentGoal: parentGoals.find((p) => p.id === data.parentGoalId)?.title,
     }
 
-    setGoals([newGoal, ...goals])
+    // Personal goals created by user go to personal list
+    setPersonalGoalsList([newGoal, ...personalGoalsList])
+    setActiveTab("personal")
   }
 
   const handleUpdateProgress = (goalId: string, progress: number) => {
-    setGoals(
+    const updateGoals = (goals: GoalData[]) =>
       goals.map((goal) => {
         if (goal.id === goalId) {
           const newStatus: GoalStatus =
@@ -195,21 +217,88 @@ export default function MyGoalsPage() {
         }
         return goal
       })
-    )
+
+    setAssignedGoalsList(updateGoals(assignedGoalsList))
+    setPersonalGoalsList(updateGoals(personalGoalsList))
   }
 
   const handleEditGoal = (goal: GoalData) => {
-    // In production, open edit modal
     console.log("Edit goal:", goal)
   }
 
   const handleDeleteGoal = (goalId: string) => {
-    setGoals(goals.filter((g) => g.id !== goalId))
+    setAssignedGoalsList(assignedGoalsList.filter((g) => g.id !== goalId))
+    setPersonalGoalsList(personalGoalsList.filter((g) => g.id !== goalId))
   }
 
   const handleArchiveGoal = (goalId: string) => {
-    // In production, archive via API
-    setGoals(goals.filter((g) => g.id !== goalId))
+    setAssignedGoalsList(assignedGoalsList.filter((g) => g.id !== goalId))
+    setPersonalGoalsList(personalGoalsList.filter((g) => g.id !== goalId))
+  }
+
+  const renderGoalList = () => {
+    if (filteredGoals.length === 0) {
+      return (
+        <GoalEmptyState
+          title={currentGoals.length === 0 ? `No ${activeTab} goals yet` : "No matching goals"}
+          description={
+            currentGoals.length === 0
+              ? activeTab === "assigned"
+                ? "Goals assigned by your manager will appear here."
+                : "Create your first personal goal to start tracking your professional development."
+              : "Try adjusting your filters or search query to find what you're looking for."
+          }
+          actionLabel={activeTab === "personal" ? "Create Goal" : undefined}
+          onAction={activeTab === "personal" && currentGoals.length === 0 ? () => {} : undefined}
+        />
+      )
+    }
+
+    if (viewMode === "alignment") {
+      return (
+        <GoalAlignmentView
+          goals={alignmentData}
+          onGoalClick={(goal) => console.log("Clicked:", goal)}
+        />
+      )
+    }
+
+    if (viewMode === "list") {
+      return (
+        <Card className="divide-y">
+          {filteredGoals.map((goal) => (
+            <GoalCard
+              key={goal.id}
+              goal={goal}
+              variant="list"
+              onEdit={handleEditGoal}
+              onDelete={handleDeleteGoal}
+              onArchive={handleArchiveGoal}
+              onUpdateProgress={handleUpdateProgress}
+              canEdit={permissions.canUpdateGoal(currentUser.id, currentUser.managerId)}
+              canDelete={permissions.canDeleteGoal(currentUser.id)}
+            />
+          ))}
+        </Card>
+      )
+    }
+
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {filteredGoals.map((goal) => (
+          <GoalCard
+            key={goal.id}
+            goal={goal}
+            onEdit={handleEditGoal}
+            onDelete={handleDeleteGoal}
+            onArchive={handleArchiveGoal}
+            onUpdateProgress={handleUpdateProgress}
+            canEdit={permissions.canUpdateGoal(currentUser.id, currentUser.managerId)}
+            canDelete={permissions.canDeleteGoal(currentUser.id)}
+          />
+        ))}
+      </div>
+    )
   }
 
   return (
@@ -218,7 +307,7 @@ export default function MyGoalsPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">My Goals</h1>
         <p className="mt-1 text-muted-foreground">
-          Track and manage your personal objectives
+          Track goals assigned to you and your personal objectives
         </p>
       </div>
 
@@ -230,70 +319,77 @@ export default function MyGoalsPage() {
         averageProgress={stats.avgProgress}
       />
 
-      {/* Inline Goal Creator */}
-      <InlineGoalCreator
-        onCreateGoal={handleCreateGoal}
-        parentGoals={parentGoals}
-        placeholder="Add a new personal goal..."
-      />
-
-      {/* Filters */}
-      <GoalFilters
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        statusFilter={statusFilter}
-        onStatusChange={setStatusFilter}
-        priorityFilter={priorityFilter}
-        onPriorityChange={setPriorityFilter}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-      />
-
-      {/* Goals Display */}
-      {filteredGoals.length === 0 ? (
-        <GoalEmptyState
-          title={goals.length === 0 ? "No goals yet" : "No matching goals"}
-          description={
-            goals.length === 0
-              ? "Create your first goal to start tracking your progress and aligning with team objectives."
-              : "Try adjusting your filters or search query to find what you're looking for."
-          }
-          actionLabel="Create Goal"
-          onAction={goals.length === 0 ? () => {} : undefined}
-        />
-      ) : viewMode === "alignment" ? (
-        <GoalAlignmentView
-          goals={alignmentData}
-          onGoalClick={(goal) => console.log("Clicked:", goal)}
-        />
-      ) : viewMode === "list" ? (
-        <Card className="divide-y">
-          {filteredGoals.map((goal) => (
-            <GoalCard
-              key={goal.id}
-              goal={goal}
-              variant="list"
-              onEdit={handleEditGoal}
-              onDelete={handleDeleteGoal}
-              onArchive={handleArchiveGoal}
-              onUpdateProgress={handleUpdateProgress}
-            />
-          ))}
-        </Card>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredGoals.map((goal) => (
-            <GoalCard
-              key={goal.id}
-              goal={goal}
-              onEdit={handleEditGoal}
-              onDelete={handleDeleteGoal}
-              onArchive={handleArchiveGoal}
-              onUpdateProgress={handleUpdateProgress}
-            />
-          ))}
+      {/* Tabs for Assigned vs Personal Goals */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "assigned" | "personal")}>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <TabsList className="grid w-full grid-cols-2 sm:w-auto">
+            <TabsTrigger value="assigned" className="gap-2">
+              <Target className="h-4 w-4" />
+              Assigned to Me
+              <Badge variant="secondary" className="ml-1">
+                {assignedGoalsList.length}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="personal" className="gap-2">
+              <UserCircle className="h-4 w-4" />
+              My Personal Goals
+              <Badge variant="secondary" className="ml-1">
+                {personalGoalsList.length}
+              </Badge>
+            </TabsTrigger>
+          </TabsList>
         </div>
-      )}
+
+        {/* Info Alert based on tab */}
+        {activeTab === "assigned" && (
+          <Alert className="mt-4 border-primary/20 bg-primary/5">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              These goals have been assigned to you by your manager or team lead. You can update progress, but only your manager can modify or remove them.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <TabsContent value="assigned" className="mt-4 space-y-4">
+          {/* Filters */}
+          <GoalFilters
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            statusFilter={statusFilter}
+            onStatusChange={setStatusFilter}
+            priorityFilter={priorityFilter}
+            onPriorityChange={setPriorityFilter}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
+          {renderGoalList()}
+        </TabsContent>
+
+        <TabsContent value="personal" className="mt-4 space-y-4">
+          {/* Inline Goal Creator - Only for personal goals */}
+          {permissions.canCreatePersonalGoals && (
+            <InlineGoalCreator
+              onCreateGoal={handleCreateGoal}
+              parentGoals={parentGoals}
+              placeholder="Add a new personal goal..."
+              showAlignmentSuggestion={true}
+            />
+          )}
+
+          {/* Filters */}
+          <GoalFilters
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            statusFilter={statusFilter}
+            onStatusChange={setStatusFilter}
+            priorityFilter={priorityFilter}
+            onPriorityChange={setPriorityFilter}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
+          {renderGoalList()}
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
