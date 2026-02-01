@@ -7,6 +7,7 @@ import { GoalCard, type GoalData, type GoalStatus, type GoalPriority } from "@/c
 import { InlineGoalCreator, type NewGoalData } from "@/components/goals/InlineGoalCreator"
 import { GoalAlignmentView, type AlignedGoal } from "@/components/goals/GoalAlignmentView"
 import { GoalEmptyState } from "@/components/goals/GoalEmptyState"
+import { GoalEditDialog } from "@/components/goals/GoalEditDialog"
 import { Card } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
@@ -18,8 +19,9 @@ import { useGoalPermissions, type CurrentUser } from "@/lib/hooks/useGoalPermiss
 const currentUser: CurrentUser = {
   id: "user-1",
   name: "John Doe",
-  role: "employee", // Change to "manager", "ceo", etc. to test different permissions
+  role: "employee", // Change to "manager", "ceo", "cto", "vp", etc. to test different permissions
   teamId: "team-1",
+  departmentId: "dept-1",
   managerId: "manager-1",
 }
 
@@ -152,6 +154,10 @@ export default function MyGoalsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("all")
   const [viewMode, setViewMode] = useState<ViewMode>("cards")
+  
+  // Edit dialog state
+  const [editingGoal, setEditingGoal] = useState<GoalData | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
   // Combined goals for stats
   const allGoals = [...assignedGoalsList, ...personalGoalsList]
@@ -223,7 +229,19 @@ export default function MyGoalsPage() {
   }
 
   const handleEditGoal = (goal: GoalData) => {
-    console.log("Edit goal:", goal)
+    setEditingGoal(goal)
+    setIsEditDialogOpen(true)
+  }
+
+  const handleSaveGoal = async (updatedGoal: GoalData) => {
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    
+    const updateGoals = (goals: GoalData[]) =>
+      goals.map((g) => (g.id === updatedGoal.id ? updatedGoal : g))
+
+    setAssignedGoalsList(updateGoals(assignedGoalsList))
+    setPersonalGoalsList(updateGoals(personalGoalsList))
   }
 
   const handleDeleteGoal = (goalId: string) => {
@@ -390,6 +408,20 @@ export default function MyGoalsPage() {
           {renderGoalList()}
         </TabsContent>
       </Tabs>
+
+      {/* Edit Goal Dialog */}
+      <GoalEditDialog
+        goal={editingGoal}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSave={handleSaveGoal}
+        parentGoals={parentGoals}
+        canEditAllFields={
+          editingGoal
+            ? permissions.canEditGoalDetails(currentUser.id, currentUser.managerId)
+            : false
+        }
+      />
     </div>
   )
 }

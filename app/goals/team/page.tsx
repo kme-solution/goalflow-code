@@ -7,6 +7,7 @@ import { GoalCard, type GoalData, type GoalStatus } from "@/components/goals/Goa
 import { InlineGoalCreator, type NewGoalData } from "@/components/goals/InlineGoalCreator"
 import { GoalAlignmentView, type AlignedGoal } from "@/components/goals/GoalAlignmentView"
 import { GoalEmptyState } from "@/components/goals/GoalEmptyState"
+import { GoalEditDialog } from "@/components/goals/GoalEditDialog"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -15,12 +16,13 @@ import { Users, Shield, Info } from "lucide-react"
 import { useGoalPermissions, getRoleDisplayInfo, type CurrentUser } from "@/lib/hooks/useGoalPermissions"
 
 // Simulated current user - in production this comes from auth context
-// Change role to test: "employee", "team_lead", "manager", "ceo", "system_admin"
+// Change role to test: "employee", "team_lead", "manager", "vp", "department_head", "ceo"
 const currentUser: CurrentUser = {
   id: "manager-1",
   name: "Sarah Chen",
   role: "team_lead", // Team leads can create team goals
   teamId: "team-1",
+  departmentId: "dept-1",
   managerId: "director-1",
 }
 
@@ -170,6 +172,10 @@ export default function TeamGoalsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("all")
   const [viewMode, setViewMode] = useState<ViewMode>("cards")
+  
+  // Edit dialog state
+  const [editingGoal, setEditingGoal] = useState<GoalData | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -234,7 +240,13 @@ export default function TeamGoalsPage() {
   }
 
   const handleEditGoal = (goal: GoalData) => {
-    console.log("Edit goal:", goal)
+    setEditingGoal(goal)
+    setIsEditDialogOpen(true)
+  }
+
+  const handleSaveGoal = async (updatedGoal: GoalData) => {
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    setGoals(goals.map((g) => (g.id === updatedGoal.id ? updatedGoal : g)))
   }
 
   const handleDeleteGoal = (goalId: string) => {
@@ -383,6 +395,20 @@ export default function TeamGoalsPage() {
           ))}
         </div>
       )}
+
+      {/* Edit Goal Dialog */}
+      <GoalEditDialog
+        goal={editingGoal}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSave={handleSaveGoal}
+        parentGoals={parentGoals}
+        canEditAllFields={
+          editingGoal
+            ? permissions.canEditGoalDetails(editingGoal.ownerId || "", currentUser.id)
+            : false
+        }
+      />
     </div>
   )
 }
