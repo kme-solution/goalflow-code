@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Zap } from "lucide-react"
+import { Logo } from "@/components/brand/logo"
 
 export function Footer() {
   return (
@@ -8,13 +8,8 @@ export function Footer() {
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           {/* Brand */}
           <div>
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 gradient-primary rounded-lg flex items-center justify-center">
-                <Zap className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-foreground">
-                goalFlow<span className="text-primary">Pro</span>
-              </span>
+            <div className="mb-4">
+              <Logo size="md" />
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Where strategy meets recognition and growth. Empowering teams to achieve their goals.
@@ -90,7 +85,7 @@ export function Footer() {
 
         <div className="border-t border-border pt-8 text-center">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} GoalFlow Pro. All rights reserved.
+            © {new Date().getFullYear()} GoalFlow. All rights reserved.
           </p>
         </div>
       </div>

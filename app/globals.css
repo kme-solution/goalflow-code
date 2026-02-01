@@ -2,41 +2,62 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* Base Theme Variables */
+/* Base Theme Variables - GoalFlow Brand */
 :root {
-  /* Core colors - Bright & Professional */
-  --background: 0% 100%; /* Pure white */
-  --foreground: 222.2 84% 4.9%; /* Dark text for contrast */
+  /* Core colors - Clean & Professional */
+  --background: 0 0% 100%; /* Pure white */
+  --foreground: 215 25% 12%; /* Deep slate for text */
   
-  /* Card & surfaces - Slightly off-white for depth */
-  --card: 0% 98%;
-  --card-foreground: 222.2 84% 4.9%;
-  --popover: 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
+  /* Card & surfaces - Subtle depth */
+  --card: 0 0% 100%;
+  --card-foreground: 215 25% 12%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 215 25% 12%;
   
-  /* Primary - Vibrant gradient-friendly purple */
-  --primary: 262 83% 58%;
-  --primary-foreground: 0% 100%;
+  /* Primary - GoalFlow Emerald (Growth & Progress) */
+  --primary: 160 84% 39%;
+  --primary-foreground: 0 0% 100%;
   
-  /* Secondary & muted tones - Soft warm grays */
-  --secondary: 0% 96%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 2214% 96%;
-  --muted-foreground: 229% 46%;
+  /* Secondary & muted tones - Cool grays */
+  --secondary: 210 20% 96%;
+  --secondary-foreground: 215 25% 12%;
+  --muted: 210 20% 96%;
+  --muted-foreground: 215 16% 47%;
   
-  /* Accent & destructive */
-  --accent: 2140% 96%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --destructive: 84% 60%;
-  --destructive-foreground: 0% 98%;
+  /* Accent - Teal complement */
+  --accent: 173 80% 40%;
+  --accent-foreground: 0 0% 100%;
   
-  /* Borders & inputs - Very light gray */
-  --border: 2213% 91%;
-  --input: 2213% 91%;
-  --ring: 262 83% 58%;
+  /* Destructive */
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+  
+  /* Success - Aligned with primary */
+  --success: 160 84% 39%;
+  --success-foreground: 0 0% 100%;
+  
+  /* Warning */
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 100%;
+  
+  /* Borders & inputs */
+  --border: 214 20% 90%;
+  --input: 214 20% 90%;
+  --ring: 160 84% 39%;
+  
+  /* Sidebar - Dark slate theme */
+  --sidebar: 215 28% 12%;
+  --sidebar-foreground: 210 20% 90%;
+  --sidebar-border: 215 20% 20%;
+  --sidebar-accent: 215 25% 18%;
   
   /* Radius */
-  --radius: 0.75rem;
+  --radius: 0.625rem;
+  
+  /* Brand Colors */
+  --brand-primary: 160 84% 39%;
+  --brand-secondary: 173 80% 40%;
+  --brand-dark: 215 28% 12%;
 }
 
 /* Theme mapping for Tailwind v4 */
@@ -57,9 +78,17 @@
   --color-accent-foreground: hsl(var(--accent-foreground));
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
 }
 
 @layer base {
@@ -198,17 +227,17 @@
     z-index: 0;
   }
   
-  /* 5. CTA Background - Dynamic Animated Gradient */
+  /* 5. CTA Background - Dynamic Animated Gradient - GoalFlow Brand */
   .bg-cta {
     position: relative;
     overflow: hidden;
     background: linear-gradient(
       135deg,
-      #4f46e5 0%,
-      #7c3aed 25%,
-      #8b5cf6 50%,
-      #a78bfa 75%,
-      #c4b5fd 100%
+      #059669 0%,
+      #10b981 25%,
+      #14b8a6 50%,
+      #0d9488 75%,
+      #0f766e 100%
     );
   }
   
@@ -485,10 +514,10 @@
     }
   }
   
-  /* ========== GRADIENT UTILITIES ========== */
+  /* ========== GRADIENT UTILITIES - GoalFlow Brand ========== */
   
   .gradient-primary {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #8b5cf6 100%);
+    background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
     background-size: 200% 200%;
     animation: gradient-shift 5s ease-in-out infinite;
   }
@@ -505,15 +534,21 @@
     animation: gradient-shift 5s ease-in-out infinite;
   }
   
-  .gradient-purple {
-    background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 50%, #c4b5fd 100%);
+  .gradient-accent {
+    background: linear-gradient(135deg, #14b8a6 0%, #0d9488 50%, #0f766e 100%);
+    background-size: 200% 200%;
+    animation: gradient-shift 5s ease-in-out infinite;
+  }
+  
+  .gradient-brand {
+    background: linear-gradient(135deg, #10b981 0%, #14b8a6 50%, #0891b2 100%);
     background-size: 200% 200%;
     animation: gradient-shift 5s ease-in-out infinite;
   }
   
   /* Dynamic gradient that changes on hover */
   .gradient-hover {
-    background: linear-gradient(135deg, #4f46e5, #7c3aed, #8b5cf6, #a78bfa, #c4b5fd);
+    background: linear-gradient(135deg, #10b981, #059669, #047857, #14b8a6, #0d9488);
     background-size: 300% 300%;
     transition: background-position 0.5s ease;
   }
@@ -544,10 +579,19 @@
       inset 1px rgba(255, 255, 255, 0.05);
   }
   
-  /* ========== TEXT UTILITIES ========== */
+  /* ========== TEXT UTILITIES - GoalFlow Brand ========== */
   
   .text-gradient-primary {
-    background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%);
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    background-size: 200% 200%;
+    animation: gradient-shift 3s ease-in-out infinite;
+  }
+  
+  .text-gradient-brand {
+    background: linear-gradient(135deg, #10b981 0%, #14b8a6 50%, #0891b2 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

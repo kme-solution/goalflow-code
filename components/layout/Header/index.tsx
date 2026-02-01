@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Breadcrumbs from '../Breadcrumbs';
 import { useAuth } from '@/components/auth-provider';
+import { LogoMark } from '@/components/brand/logo';
 
 interface HeaderProps {
   onMenuToggle?: () => void;
@@ -55,9 +56,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
           
           {/* Logo for Mobile */}
           <Link href="/dashboard" className="lg:hidden">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary-500 to-primary-600">
-              <span className="font-bold text-white text-sm">GF</span>
-            </div>
+            <LogoMark size="md" />
           </Link>
           
           {/* Breadcrumbs */}
