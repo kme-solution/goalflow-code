@@ -13,9 +13,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { DatePicker } from "@/components/ui/date-picker"
-import { Plus, X, ChevronDown, ChevronUp } from "lucide-react"
+import { Plus, X, ChevronDown, ChevronUp, Lightbulb, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { GoalPriority, GoalStatus } from "./GoalCard"
+import type { GoalPriority } from "./GoalCard"
 
 export interface NewGoalData {
   title: string
@@ -23,6 +23,7 @@ export interface NewGoalData {
   priority: GoalPriority
   dueDate?: Date
   parentGoalId?: string
+  assigneeId?: string
 }
 
 interface ParentGoal {
@@ -30,11 +31,20 @@ interface ParentGoal {
   title: string
 }
 
+interface Assignee {
+  id: string
+  name: string
+}
+
 interface InlineGoalCreatorProps {
   onCreateGoal: (data: NewGoalData) => Promise<void>
   parentGoals?: ParentGoal[]
   placeholder?: string
   className?: string
+  showAssignee?: boolean
+  assignees?: Assignee[]
+  assigneeLabel?: string
+  showAlignmentSuggestion?: boolean
 }
 
 export function InlineGoalCreator({
@@ -42,6 +52,10 @@ export function InlineGoalCreator({
   parentGoals = [],
   placeholder = "Add a new goal...",
   className,
+  showAssignee = false,
+  assignees = [],
+  assigneeLabel = "Assign to",
+  showAlignmentSuggestion = false,
 }: InlineGoalCreatorProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -52,6 +66,7 @@ export function InlineGoalCreator({
     priority: "medium",
     dueDate: undefined,
     parentGoalId: undefined,
+    assigneeId: undefined,
   })
 
   const inputRef = useRef<HTMLInputElement>(null)
@@ -74,6 +89,7 @@ export function InlineGoalCreator({
         priority: "medium",
         dueDate: undefined,
         parentGoalId: undefined,
+        assigneeId: undefined,
       })
       setShowAdvanced(false)
       setIsExpanded(false)
@@ -91,6 +107,7 @@ export function InlineGoalCreator({
       priority: "medium",
       dueDate: undefined,
       parentGoalId: undefined,
+      assigneeId: undefined,
     })
     setShowAdvanced(false)
     setIsExpanded(false)
@@ -163,6 +180,32 @@ export function InlineGoalCreator({
                 className="h-8 w-[140px]"
               />
 
+              {/* Assignee selector - only shown when enabled */}
+              {showAssignee && assignees.length > 0 && (
+                <Select
+                  value={formData.assigneeId || "unassigned"}
+                  onValueChange={(value) =>
+                    setFormData({
+                      ...formData,
+                      assigneeId: value === "unassigned" ? undefined : value,
+                    })
+                  }
+                >
+                  <SelectTrigger className="h-8 w-[160px]">
+                    <Users className="mr-1.5 h-3.5 w-3.5" />
+                    <SelectValue placeholder={assigneeLabel} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                    {assignees.map((assignee) => (
+                      <SelectItem key={assignee.id} value={assignee.id}>
+                        {assignee.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
               <Button
                 type="button"
                 variant="ghost"
@@ -196,27 +239,38 @@ export function InlineGoalCreator({
                 />
 
                 {parentGoals.length > 0 && (
-                  <Select
-                    value={formData.parentGoalId || "none"}
-                    onValueChange={(value) =>
-                      setFormData({
-                        ...formData,
-                        parentGoalId: value === "none" ? undefined : value,
-                      })
-                    }
-                  >
-                    <SelectTrigger className="h-8">
-                      <SelectValue placeholder="Align to parent goal (optional)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No parent goal</SelectItem>
-                      {parentGoals.map((goal) => (
-                        <SelectItem key={goal.id} value={goal.id}>
-                          {goal.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-2">
+                    <Select
+                      value={formData.parentGoalId || "none"}
+                      onValueChange={(value) =>
+                        setFormData({
+                          ...formData,
+                          parentGoalId: value === "none" ? undefined : value,
+                        })
+                      }
+                    >
+                      <SelectTrigger className="h-8">
+                        <SelectValue placeholder="Align to parent goal (optional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No parent goal</SelectItem>
+                        {parentGoals.map((goal) => (
+                          <SelectItem key={goal.id} value={goal.id}>
+                            {goal.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    {showAlignmentSuggestion && !formData.parentGoalId && (
+                      <div className="flex items-start gap-2 rounded-md bg-amber-500/10 px-3 py-2 text-xs text-amber-700">
+                        <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                        <span>
+                          Aligning goals to company or team objectives helps track how individual efforts contribute to organizational success.
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             )}
