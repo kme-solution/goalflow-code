@@ -277,11 +277,30 @@ export const adminMenuConfig: MenuItem[] = [
     roles: ["hr_admin"], // Only HR admins for internal admin
   },
   {
-    id: "admin-analytics",
-    label: "System Analytics",
-    icon: BarChart3,
-    href: "/admin/analytics",
+    id: "admin-organization",
+    label: "Organization",
+    icon: Building2,
     roles: ["hr_admin"],
+    items: [
+      {
+        id: "org-settings",
+        label: "Settings",
+        href: "/admin/organization",
+        roles: ["hr_admin"],
+      },
+      {
+        id: "org-hierarchy",
+        label: "Hierarchy",
+        href: "/admin/organization/hierarchy",
+        roles: ["hr_admin"],
+      },
+      {
+        id: "org-chart",
+        label: "Org Chart",
+        href: "/admin/organization/hierarchy/chart",
+        roles: ["hr_admin"],
+      },
+    ],
   },
   {
     id: "admin-customers",
