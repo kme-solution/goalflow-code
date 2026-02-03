@@ -1,28 +1,19 @@
 // lib/menu-config.ts
-import type React from "react"
 import {
   Home,
   Target,
   Award,
   TrendingUp,
-  User,
   Settings,
   Users,
-  CheckCircle,
   Activity,
-  BookOpen,
   HelpCircle,
   Building2,
-  BarChart3,
-  FolderOpen,
-  Bell,
   FileText,
   Zap,
-  Calendar,
   PieChart,
   Smartphone,
   Shield,
-  Globe,
   LucideIcon,
 } from "lucide-react"
 

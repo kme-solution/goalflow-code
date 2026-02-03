@@ -507,7 +507,7 @@ export default function MentionsPage() {
               </div>
             </div>
             <Button variant="outline" size="sm" asChild>
-              <a href="/profile/settings">
+              <a href="/settings/profile">
                 Manage Settings
               </a>
             </Button>
