@@ -73,13 +73,7 @@ export const menuConfig: MenuItem[] = [
         label: "Company Goals",
         href: "/goals/company",
         roles: ["ceo", "hr_admin"],
-      },
-      {
-        id: "new-goal",
-        label: "Create Goal",
-        href: "/goals/new",
-        roles: ["employee", "manager", "team_lead", "hr_admin"],
-      },
+      }     
     ],
   },
 
