@@ -152,13 +152,13 @@ export const menuConfig: MenuItem[] = [
     roles: ["employee", "manager", "hr_admin", "ceo", "team_lead"],
   },
 
-  {
-    id: "projects",
-    label: "Projects",
-    icon: FolderOpen,
-    href: "/projects",
-    roles: ["employee", "manager", "team_lead", "ceo"],
-  },
+  // {
+  //   id: "projects",
+  //   label: "Projects",
+  //   icon: FolderOpen,
+  //   href: "/projects",
+  //   roles: ["employee", "manager", "team_lead", "ceo"],
+  // },
 
   // ==================== PEOPLE MANAGEMENT ====================
   {
