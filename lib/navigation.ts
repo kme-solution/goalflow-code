@@ -21,6 +21,9 @@ import {
   Route,
   FileText,
   RefreshCw,
+  Bell,
+  Lock,
+  Server,
 } from "lucide-react"
 
 export type UserRole = "hr_admin" | "manager" | "employee" | "ceo" | "system_admin" | "team_lead"
@@ -205,10 +208,36 @@ export const navigationConfig: NavigationItem[] = [
         roles: ["employee", "manager", "hr_admin", "ceo", "system_admin", "team_lead"],
       },
       {
-        name: "Preferences",
-        href: "/profile/settings",
+        name: "Settings",
+        href: "/profile/settings/profile",
         icon: Settings,
         roles: ["employee", "manager", "hr_admin", "ceo", "system_admin", "team_lead"],
+        children: [
+          {
+            name: "Profile",
+            href: "/profile/settings/profile",
+            icon: User,
+            roles: ["employee", "manager", "hr_admin", "ceo", "system_admin", "team_lead"],
+          },
+          {
+            name: "Notifications",
+            href: "/profile/settings/notifications",
+            icon: Bell,
+            roles: ["employee", "manager", "hr_admin", "ceo", "system_admin", "team_lead"],
+          },
+          {
+            name: "Security",
+            href: "/profile/settings/security",
+            icon: Lock,
+            roles: ["employee", "manager", "hr_admin", "ceo", "system_admin", "team_lead"],
+          },
+          {
+            name: "Preferences",
+            href: "/profile/settings/preferences",
+            icon: Sliders,
+            roles: ["employee", "manager", "hr_admin", "ceo", "system_admin", "team_lead"],
+          },
+        ],
       },
       {
         name: "Help & Support",
@@ -247,6 +276,44 @@ export const navigationConfig: NavigationItem[] = [
         href: "/admin/analytics",
         icon: BarChart3,
         roles: ["hr_admin", "system_admin", "ceo"],
+      },
+      {
+        name: "System Settings",
+        href: "/admin/settings/organization",
+        icon: Settings,
+        roles: ["system_admin"],
+        children: [
+          {
+            name: "Organization",
+            href: "/admin/settings/organization",
+            icon: Building2,
+            roles: ["system_admin"],
+          },
+          {
+            name: "Features",
+            href: "/admin/settings/features",
+            icon: Zap,
+            roles: ["system_admin"],
+          },
+          {
+            name: "Integrations",
+            href: "/admin/settings/integrations",
+            icon: Lock,
+            roles: ["system_admin"],
+          },
+          {
+            name: "Security",
+            href: "/admin/settings/security",
+            icon: Lock,
+            roles: ["system_admin"],
+          },
+          {
+            name: "System",
+            href: "/admin/settings/system",
+            icon: Server,
+            roles: ["system_admin"],
+          },
+        ],
       },
     ],
   },
