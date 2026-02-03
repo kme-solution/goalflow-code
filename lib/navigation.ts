@@ -17,6 +17,10 @@ import {
   Sliders,
   Heart,
   Zap,
+  GraduationCap,
+  Route,
+  FileText,
+  RefreshCw,
 } from "lucide-react"
 
 export type UserRole = "hr_admin" | "manager" | "employee" | "ceo" | "system_admin" | "team_lead"
@@ -155,6 +159,36 @@ export const navigationConfig: NavigationItem[] = [
         href: "/performance/development",
         icon: BookOpen,
         roles: ["employee", "manager", "hr_admin", "ceo", "system_admin", "team_lead"],
+      },
+      {
+        name: "Skills Library",
+        href: "/performance/development/skills",
+        icon: GraduationCap,
+        roles: ["employee", "manager", "hr_admin", "ceo", "system_admin", "team_lead"],
+      },
+      {
+        name: "Career Paths",
+        href: "/performance/development/paths",
+        icon: Route,
+        roles: ["employee", "manager", "hr_admin", "ceo", "system_admin", "team_lead"],
+      },
+      {
+        name: "Analytics",
+        href: "/performance/analytics",
+        icon: BarChart3,
+        roles: ["manager", "hr_admin", "ceo", "team_lead"],
+      },
+      {
+        name: "Review Cycles",
+        href: "/performance/reviews/cycles",
+        icon: RefreshCw,
+        roles: ["hr_admin"],
+      },
+      {
+        name: "Review Templates",
+        href: "/performance/reviews/templates",
+        icon: FileText,
+        roles: ["hr_admin"],
       },
     ],
   },
