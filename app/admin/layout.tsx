@@ -13,7 +13,7 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   return (
-    <ProtectedRoute requiredRoles={["hr_admin"]}>
+    <ProtectedRoute allowedRoles={["hr_admin"]}>
       <Layout>{children}</Layout>
     </ProtectedRoute>
   )
