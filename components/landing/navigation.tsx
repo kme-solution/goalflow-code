@@ -23,6 +23,9 @@ export function Navigation() {
             <a href="#features" className="text-muted-foreground hover:text-primary transition-colors">
               Features
             </a>
+            <Link href="/docs" className="text-muted-foreground hover:text-primary transition-colors">
+              Docs
+            </Link>
             <a href="#pricing" className="text-muted-foreground hover:text-primary transition-colors">
               Pricing
             </a>
@@ -49,6 +52,9 @@ export function Navigation() {
             <a href="#features" className="block text-muted-foreground hover:text-primary transition-colors">
               Features
             </a>
+            <Link href="/docs" className="block text-muted-foreground hover:text-primary transition-colors">
+              Docs
+            </Link>
             <a href="#pricing" className="block text-muted-foreground hover:text-primary transition-colors">
               Pricing
             </a>
