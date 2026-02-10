@@ -1,0 +1,354 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Core Tables
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  password      String
+  name          String
+  role          UserRole
+  departmentId  String?
+  managerId     String?
+  avatar        String?
+  isActive      Boolean  @default(true)
+  lastLogin     DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  department    Department?     @relation("DepartmentMembers", fields: [departmentId], references: [id])
+  manager       User?           @relation("UserManager", fields: [managerId], references: [id])
+  directReports User[]          @relation("UserManager")
+  goals         Goal[]
+  reviews       Review[]        @relation("ReviewEmployee")
+  managerReviews Review[]       @relation("ReviewManager")
+  recognitions  Recognition[]   @relation("RecognitionFrom")
+  receivedRecognitions Recognition[] @relation("RecognitionTo")
+  notifications Notification[]
+  progressUpdates GoalProgress[]
+  organization  Organization?   @relation(fields: [organizationId], references: [id])
+  organizationId String?
+  departmentHead Department[]   @relation("DepartmentHead")
+  teamLead      Team[]          @relation("TeamLead")
+
+  @@map("users")
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  legalName   String?
+  industry    String
+  size        String
+  structureType String
+  description String?
+  mission     String?
+  vision      String?
+  website     String?
+  fiscalYearStart String
+  timezone    String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users       User[]
+  departments Department[]
+  goals       Goal[]
+  settings    OrganizationSettings?
+  teams       Team[]
+  reviewCycles ReviewCycle[]
+
+  @@map("organizations")
+}
+
+model OrganizationSettings {
+  id              String   @id @default(cuid())
+  organizationId  String   @unique
+  allowSelfReviews Boolean  @default(true)
+  requireManagerApproval Boolean @default(true)
+  autoArchiveGoals Boolean  @default(false)
+  goalDeadlineNotifications Boolean @default(true)
+  reviewCycleReminders Boolean @default(true)
+  publicRecognitions Boolean @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  organization    Organization @relation(fields: [organizationId], references: [id])
+
+  @@map("organization_settings")
+}
+
+model Department {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  code           String?
+  description    String?
+  headId         String?
+  level          Int      @default(0)
+  order          Int      @default(0)
+  color          String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  head           User?         @relation("DepartmentHead", fields: [headId], references: [id])
+  members        User[]        @relation("DepartmentMembers")
+  teams          Team[]
+  goals          Goal[]
+
+  @@map("departments")
+}
+
+model Team {
+  id             String   @id @default(cuid())
+  organizationId String
+  departmentId   String
+  name           String
+  description    String?
+  leadId         String?
+  type           TeamType
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  department     Department   @relation(fields: [departmentId], references: [id])
+  lead           User?         @relation("TeamLead", fields: [leadId], references: [id])
+
+  @@map("teams")
+}
+
+model Goal {
+  id             String     @id @default(cuid())
+  organizationId String
+  title          String
+  description    String?
+  type           GoalType
+  targetValue    Float?
+  currentValue   Float      @default(0)
+  unit           String?
+  confidence     Int        @default(5)
+  startDate      DateTime?
+  endDate        DateTime
+  status         GoalStatus @default(draft)
+  ownerId        String
+  parentGoalId   String?
+  isArchived     Boolean    @default(false)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  // Relations
+  organization   Organization     @relation(fields: [organizationId], references: [id])
+  owner          User             @relation(fields: [ownerId], references: [id])
+  parentGoal     Goal?            @relation("GoalHierarchy", fields: [parentGoalId], references: [id])
+  childGoals     Goal[]           @relation("GoalHierarchy")
+  progress       GoalProgress[]
+  relationships  GoalRelationship[] @relation("GoalRelationshipsParent")
+  childRelationships GoalRelationship[] @relation("GoalRelationshipsChild")
+  department     Department?      @relation(fields: [departmentId], references: [id])
+  departmentId   String?
+
+  @@map("goals")
+}
+
+model GoalProgress {
+  id            String   @id @default(cuid())
+  goalId        String
+  previousValue Float
+  newValue      Float
+  confidence    Int
+  comment       String?
+  evidenceUrl   String?
+  userId        String
+  createdAt     DateTime @default(now())
+
+  // Relations
+  goal          Goal @relation(fields: [goalId], references: [id])
+  user          User @relation(fields: [userId], references: [id])
+
+  @@map("goal_progress")
+}
+
+model GoalRelationship {
+  id               String            @id @default(cuid())
+  parentGoalId     String
+  childGoalId      String
+  relationshipType GoalRelationshipType
+  weight           Float             @default(1.0)
+  createdAt        DateTime          @default(now())
+
+  // Relations
+  parentGoal       Goal @relation("GoalRelationshipsParent", fields: [parentGoalId], references: [id])
+  childGoal        Goal @relation("GoalRelationshipsChild", fields: [childGoalId], references: [id])
+
+  @@map("goal_relationships")
+}
+
+model Review {
+  id              String       @id @default(cuid())
+  employeeId      String
+  managerId       String
+  cycleId         String
+  status          ReviewStatus @default(draft)
+  selfRating      Int?
+  managerRating   Int?
+  selfAssessment  String?
+  managerFeedback String?
+  developmentPlan String?
+  isArchived      Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // Relations
+  employee        User   @relation("ReviewEmployee", fields: [employeeId], references: [id])
+  manager         User   @relation("ReviewManager", fields: [managerId], references: [id])
+  cycle           ReviewCycle @relation(fields: [cycleId], references: [id])
+
+  @@map("reviews")
+}
+
+model ReviewCycle {
+  id                    String   @id @default(cuid())
+  organizationId        String
+  name                  String
+  description           String?
+  startDate             DateTime
+  endDate               DateTime
+  selfAssessmentDeadline DateTime?
+  managerReviewDeadline DateTime?
+  calibrationDate       DateTime?
+  finalDate             DateTime?
+  status                ReviewCycleStatus @default(draft)
+  templateId            String?
+  totalParticipants     Int      @default(0)
+  completedReviews      Int      @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relations
+  organization          Organization @relation(fields: [organizationId], references: [id])
+  reviews               Review[]
+
+  @@map("review_cycles")
+}
+
+model Recognition {
+  id          String          @id @default(cuid())
+  fromUserId  String
+  toUserId    String
+  badge       String
+  message     String
+  type        RecognitionType
+  isPublic    Boolean         @default(true)
+  likes       Int             @default(0)
+  isArchived  Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+
+  // Relations
+  fromUser    User @relation("RecognitionFrom", fields: [fromUserId], references: [id])
+  toUser      User @relation("RecognitionTo", fields: [toUserId], references: [id])
+
+  @@map("recognitions")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  priority  NotificationPriority @default(normal)
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  // Relations
+  user      User @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+// Enums
+
+enum UserRole {
+  employee
+  manager
+  hr_admin
+  ceo
+  team_lead
+}
+
+enum TeamType {
+  functional
+  cross_functional
+  project
+  virtual
+}
+
+enum GoalType {
+  objective
+  key_result
+}
+
+enum GoalStatus {
+  draft
+  active
+  completed
+  at_risk
+  archived
+}
+
+enum GoalRelationshipType {
+  cascade
+  dependency
+  related
+}
+
+enum ReviewStatus {
+  draft
+  self_assessment
+  manager_review
+  calibration
+  completed
+}
+
+enum ReviewCycleStatus {
+  draft
+  active
+  calibration
+  completed
+  archived
+}
+
+enum RecognitionType {
+  peer
+  manager
+  company
+}
+
+enum NotificationType {
+  review
+  recognition
+  goal
+  system
+}
+
+enum NotificationPriority {
+  low
+  normal
+  high
+}

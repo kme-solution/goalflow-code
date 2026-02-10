@@ -1,6 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { MOCK_USERS } from "@/lib/mock-data/users"
+import jwt from "jsonwebtoken"
+import { prisma } from "@/lib/db"
 import type { AuthResponse } from "@/lib/types/auth.types"
+
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,10 +21,18 @@ export async function GET(request: NextRequest) {
 
     const token = authHeader.substring(7)
 
-    // Decode token (mock)
+    // Verify JWT token
     try {
-      const decoded = JSON.parse(atob(token))
-      const user = MOCK_USERS.find((u) => u.id === decoded.userId)
+      const decoded = jwt.verify(token, JWT_SECRET) as { userId: string }
+
+      // Find user in database
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.userId },
+        include: {
+          department: true,
+          organization: true,
+        },
+      })
 
       if (!user) {
         return NextResponse.json<AuthResponse>(
@@ -33,13 +44,23 @@ export async function GET(request: NextRequest) {
         )
       }
 
-      const { password: _, ...userWithoutPassword } = user
+      // Transform to match the expected User type
+      const transformedUser = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        department: user.department?.name || "",
+        title: user.name, // Using name as title for now
+        avatar: user.avatar || undefined,
+      }
 
       return NextResponse.json<AuthResponse>({
         success: true,
-        user: userWithoutPassword,
+        user: transformedUser,
       })
-    } catch {
+    } catch (jwtError) {
+      console.error("JWT verification error:", jwtError)
       return NextResponse.json<AuthResponse>(
         {
           success: false,

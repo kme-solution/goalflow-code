@@ -1,6 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { MOCK_USERS } from "@/lib/mock-data/users"
+import bcrypt from "bcryptjs"
+import jwt from "jsonwebtoken"
+import { prisma } from "@/lib/db"
 import type { LoginRequest, LoginResponse } from "@/lib/types/auth.types"
+
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,10 +33,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    
-
-    // Find user in mock data
-    const user = MOCK_USERS.find((u) => u.email === email && u.password === password);
+    // Find user in database
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        department: true,
+        organization: true,
+      },
+    });
 
     if (!user) {
       return NextResponse.json<LoginResponse>(
@@ -44,20 +52,56 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check password
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return NextResponse.json<LoginResponse>(
+        {
+          success: false,
+          error: "Invalid email or password",
+        },
+        { status: 401 },
+      );
+    }
+
+    // Update last login
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLogin: new Date() },
+    });
+
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+      },
+      JWT_SECRET,
+      { expiresIn: "24h" }
+    );
+
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
 
-    // Generate token (mock)
-    const token = btoa(JSON.stringify({ userId: user.id, timestamp: Date.now() }));
-
-    
+    // Transform to match the expected User type
+    const transformedUser = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      department: user.department?.name || "",
+      title: user.name, // Using name as title for now
+      avatar: user.avatar || undefined,
+    };
 
     const response = NextResponse.json<LoginResponse>({
       success: true,
-      user: userWithoutPassword,
+      user: transformedUser,
       token,
     });
-    // Set session cookie (mock)
+
+    // Set session cookie
     response.cookies.set('session', token, {
       httpOnly: true,
       path: '/',
@@ -65,6 +109,7 @@ export async function POST(request: NextRequest) {
       // secure: true, // Uncomment if using HTTPS
       maxAge: 60 * 60 * 24, // 1 day
     });
+
     return response;
   } catch (error) {
     console.error("Login route error:", error);
