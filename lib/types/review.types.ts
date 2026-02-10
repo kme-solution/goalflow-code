@@ -64,3 +64,18 @@ export interface ReviewDetailResponse {
   review?: PerformanceReview
   error?: string
 }
+
+export interface CreateReviewRequest {
+  employeeId: string
+  cycleId: string
+  scheduledDate?: string
+}
+
+export interface UpdateReviewRequest {
+  selfRating?: number
+  selfAssessment?: string
+  managerRating?: number
+  managerFeedback?: string
+  developmentPlan?: string
+  status?: "scheduled" | "in_progress" | "completed" | "cancelled"
+}

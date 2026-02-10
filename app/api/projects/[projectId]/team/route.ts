@@ -3,7 +3,11 @@ import { prisma } from "@/lib/db"
 import { getUserFromToken } from "@/lib/auth"
 import type { EmployeeListResponse, Employee } from "@/lib/types/employee.types"
 
-export async function GET(request: NextRequest) {
+interface RouteParams {
+  params: { projectId: string }
+}
+
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const user = await getUserFromToken(request)
     if (!user) {
@@ -13,27 +17,29 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const searchParams = request.nextUrl.searchParams
+    const projectId = params.projectId
+
+    // Since there's no direct project-team relationship in the database,
+    // we'll return users that could be conceptually associated with this project
+    // For now, return all active users in the organization
+    // In a real implementation, this would filter by project team membership
+
+    const { searchParams } = new URL(request.url)
     const departmentId = searchParams.get("departmentId")
-    const managerId = searchParams.get("managerId")
-    const status = searchParams.get("status") as "active" | "inactive" | "on_leave" | "terminated" | null
+    const role = searchParams.get("role")
 
     // Build where clause
     const where: any = {
       organizationId: user.organizationId,
+      isActive: true,
     }
 
     if (departmentId) {
       where.departmentId = departmentId
     }
 
-    if (managerId) {
-      where.managerId = managerId
-    }
-
-    if (status) {
-      // Map status to isActive field
-      where.isActive = status === "active"
+    if (role) {
+      where.role = role
     }
 
     const users = await prisma.user.findMany({
@@ -62,7 +68,7 @@ export async function GET(request: NextRequest) {
       id: dbUser.id,
       email: dbUser.email,
       name: dbUser.name,
-      title: "Employee", // Default title, could be enhanced with additional field
+      title: "Team Member", // Default title, could be enhanced
       department: dbUser.department?.name || "Unassigned",
       departmentId: dbUser.departmentId || "",
       managerId: dbUser.managerId || undefined,
@@ -71,7 +77,7 @@ export async function GET(request: NextRequest) {
       status: dbUser.isActive ? "active" : "inactive",
       startDate: dbUser.createdAt.toISOString().split('T')[0], // Use createdAt as start date
       avatar: dbUser.avatar || undefined,
-      location: "Remote", // Default location, could be enhanced
+      location: "Remote", // Default location
       skills: [], // Not implemented in schema yet
       performanceScore: undefined, // Not implemented in schema yet
       goalCompletionRate: undefined, // Not implemented in schema yet
@@ -85,11 +91,11 @@ export async function GET(request: NextRequest) {
       total: employees.length,
     })
   } catch (error) {
-    console.error("Employees API error:", error)
+    console.error("Project team API error:", error)
     return NextResponse.json<EmployeeListResponse>(
       {
         success: false,
-        error: "Failed to fetch employees",
+        error: "Failed to fetch project team",
       },
       { status: 500 },
     )

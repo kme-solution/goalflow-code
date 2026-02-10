@@ -48,4 +48,28 @@ export function getCurrentUser() {
   return session?.user || null
 }
 
+export function getUserFromToken(request: Request) {
+  const authHeader = request.headers.get("Authorization")
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return null
+  }
+
+  const token = authHeader.substring(7);
+  // Here you would typically verify the token and extract user info
+  // For simplicity, we'll just return a mock user if the token is "valid-token"
+  if (token === "valid-token") {
+    return {
+      id: "user-id",
+      email: "asdf@mail.com",
+      name: "John Doe",
+      organizationId: "org-id",
+    }
+  }
+
+  return null
+}
+  
+
+
+
 export { useAuth } from "@/components/auth-provider"

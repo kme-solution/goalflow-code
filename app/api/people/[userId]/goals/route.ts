@@ -3,7 +3,11 @@ import { prisma } from "@/lib/db"
 import { getUserFromToken } from "@/lib/auth"
 import type { GoalListResponse, Goal } from "@/lib/types/goal.types"
 
-export async function GET(request: NextRequest) {
+interface RouteParams {
+  params: { userId: string }
+}
+
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const user = await getUserFromToken(request)
     if (!user) {
@@ -13,19 +17,32 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const searchParams = request.nextUrl.searchParams
-    const userId = searchParams.get("userId")
+    const targetUserId = params.userId
+
+    // Verify the target user exists and belongs to the same organization
+    const targetUser = await prisma.user.findFirst({
+      where: {
+        id: targetUserId,
+        organizationId: user.organizationId,
+      },
+    })
+
+    if (!targetUser) {
+      return NextResponse.json<GoalListResponse>(
+        { success: false, error: "User not found" },
+        { status: 404 }
+      )
+    }
+
+    const { searchParams } = new URL(request.url)
     const type = searchParams.get("type") as "objective" | "key_result" | null
     const status = searchParams.get("status") as "draft" | "active" | "completed" | "at_risk" | "archived" | null
 
     // Build where clause
     const where: any = {
       organizationId: user.organizationId,
+      ownerId: targetUserId,
       isArchived: false,
-    }
-
-    if (userId) {
-      where.ownerId = userId
     }
 
     if (type) {
@@ -82,7 +99,7 @@ export async function GET(request: NextRequest) {
         title: goal.title,
         description: goal.description || undefined,
         type: goal.type,
-        level: "personal" as const, // Default level, could be enhanced based on department/company logic
+        level: "personal" as const,
         targetValue: goal.targetValue || undefined,
         currentValue: goal.currentValue,
         unit: goal.unit || undefined,
@@ -93,16 +110,16 @@ export async function GET(request: NextRequest) {
         status: goal.status,
         ownerId: goal.ownerId,
         ownerName: goal.owner.name,
-        contributors: [], // Not implemented in schema yet
+        contributors: [],
         parentGoalId: goal.parentGoalId || undefined,
         childGoalIds: goal.childGoals.map(child => child.id),
-        relatedGoalIds: [], // Not implemented in schema yet
-        dependencies: [], // Not implemented in schema yet
+        relatedGoalIds: [],
+        dependencies: [],
         progress,
-        riskLevel: "low_risk" as const, // Default, could be calculated
+        riskLevel: "low_risk" as const,
         createdAt: goal.createdAt.toISOString(),
         updatedAt: goal.updatedAt.toISOString(),
-        progressHistory: [], // Not implemented in current response
+        progressHistory: [],
       }
     })
 
@@ -112,11 +129,11 @@ export async function GET(request: NextRequest) {
       total: transformedGoals.length,
     })
   } catch (error) {
-    console.error("Goals API error:", error)
+    console.error("User goals API error:", error)
     return NextResponse.json<GoalListResponse>(
       {
         success: false,
-        error: "Failed to fetch goals",
+        error: "Failed to fetch user goals",
       },
       { status: 500 },
     )
