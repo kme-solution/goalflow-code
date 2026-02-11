@@ -78,9 +78,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // Transform database goals to match the expected Goal type
     const transformedGoals: Goal[] = goals.map((goal) => {
-      const progress = goal.targetValue
-        ? Math.round((goal.currentValue / goal.targetValue) * 100)
-        : 0
+      const hasValidTarget = typeof goal.targetValue === "number" && goal.targetValue > 0
+      const rawProgress = hasValidTarget ? (goal.currentValue / goal.targetValue) * 100 : 0
+      const progress = Number.isFinite(rawProgress) ? Math.round(rawProgress) : 0
 
       return {
         id: goal.id,
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         confidence: goal.confidence,
         confidenceLevel: goal.confidence >= 7 ? "green" : goal.confidence >= 4 ? "yellow" : "red",
         startDate: goal.startDate?.toISOString() || "",
-        endDate: goal.endDate.toISOString(),
+        endDate: goal.endDate ? goal.endDate.toISOString() : goal.startDate?.toISOString() || "",
         status: goal.status,
         ownerId: goal.ownerId,
         ownerName: goal.owner.name,

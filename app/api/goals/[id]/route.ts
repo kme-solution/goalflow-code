@@ -55,6 +55,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         }
 
         // Transform to match Goal type
+        const hasValidTarget = typeof goal.targetValue === "number" && goal.targetValue > 0
+        const rawProgress = hasValidTarget ? (goal.currentValue / goal.targetValue) * 100 : 0
+        const progress = Number.isFinite(rawProgress) ? Math.round(rawProgress) : 0
+
         const transformedGoal: Goal = {
             id: goal.id,
             organizationId: goal.organizationId,
@@ -68,7 +72,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             confidence: goal.confidence,
             confidenceLevel: goal.confidence >= 7 ? "green" : goal.confidence >= 4 ? "yellow" : "red",
             startDate: goal.startDate?.toISOString() || "",
-            endDate: goal.endDate.toISOString(),
+            // Safely handle missing end dates
+            endDate: goal.endDate ? goal.endDate.toISOString() : goal.startDate?.toISOString() || "",
             status: goal.status,
             ownerId: goal.ownerId,
             ownerName: goal.owner.name,
@@ -77,7 +82,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             childGoalIds: goal.childGoals.map(child => child.id),
             relatedGoalIds: [], // Not implemented yet
             dependencies: [], // Not implemented yet
-            progress: goal.targetValue ? Math.round((goal.currentValue / goal.targetValue) * 100) : 0,
+            progress,
             riskLevel: "low_risk" as const, // Default
             createdAt: goal.createdAt.toISOString(),
             updatedAt: goal.updatedAt.toISOString(),
@@ -162,6 +167,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         })
 
         // Transform to match Goal type
+        const hasValidTarget = typeof updatedGoal.targetValue === "number" && updatedGoal.targetValue > 0
+        const rawProgress = hasValidTarget ? (updatedGoal.currentValue / updatedGoal.targetValue) * 100 : 0
+        const progress = Number.isFinite(rawProgress) ? Math.round(rawProgress) : 0
+
         const transformedGoal: Goal = {
             id: updatedGoal.id,
             organizationId: updatedGoal.organizationId,
@@ -175,7 +184,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
             confidence: updatedGoal.confidence,
             confidenceLevel: updatedGoal.confidence >= 7 ? "green" : updatedGoal.confidence >= 4 ? "yellow" : "red",
             startDate: updatedGoal.startDate?.toISOString() || "",
-            endDate: updatedGoal.endDate.toISOString(),
+            // Safely handle missing end dates
+            endDate: updatedGoal.endDate ? updatedGoal.endDate.toISOString() : updatedGoal.startDate?.toISOString() || "",
             status: updatedGoal.status,
             ownerId: updatedGoal.ownerId,
             ownerName: updatedGoal.owner.name,
@@ -184,7 +194,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
             childGoalIds: updatedGoal.childGoals.map(child => child.id),
             relatedGoalIds: [],
             dependencies: [],
-            progress: updatedGoal.targetValue ? Math.round((updatedGoal.currentValue / updatedGoal.targetValue) * 100) : 0,
+            progress,
             riskLevel: "low_risk" as const,
             createdAt: updatedGoal.createdAt.toISOString(),
             updatedAt: updatedGoal.updatedAt.toISOString(),

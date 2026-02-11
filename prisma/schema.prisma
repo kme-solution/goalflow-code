@@ -38,6 +38,7 @@ model User {
   organizationId String?
   departmentHead Department[]   @relation("DepartmentHead")
   teamLead      Team[]          @relation("TeamLead")
+  usageEvents   UsageEvent[]
 
   @@map("users")
 }
@@ -66,6 +67,9 @@ model Organization {
   settings    OrganizationSettings?
   teams       Team[]
   reviewCycles ReviewCycle[]
+  usageEvents UsageEvent[]
+  reportSchedules ReportSchedule[]
+  reportRuns  ReportRun[]
 
   @@map("organizations")
 }
@@ -128,6 +132,7 @@ model Team {
   organization   Organization @relation(fields: [organizationId], references: [id])
   department     Department   @relation(fields: [departmentId], references: [id])
   lead           User?         @relation("TeamLead", fields: [leadId], references: [id])
+  goals          Goal[]
 
   @@map("teams")
 }
@@ -283,6 +288,58 @@ model Notification {
   user      User @relation(fields: [userId], references: [id])
 
   @@map("notifications")
+}
+
+model UsageEvent {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String?
+  type           String   // e.g. "login", "feature_usage", "api_call"
+  feature        String   // e.g. "goals", "recognition", "dashboard"
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  user           User?        @relation(fields: [userId], references: [id])
+
+  @@map("usage_events")
+}
+
+model ReportSchedule {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  type           String   // e.g. "ceo_summary", "department_performance"
+  cron           String   // cron expression or simplified schedule string
+  recipients     String   // comma-separated emails or group identifiers
+  format         String   // e.g. "pdf", "ppt", "csv"
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  runs           ReportRun[]
+
+  @@map("report_schedules")
+}
+
+model ReportRun {
+  id             String   @id @default(cuid())
+  organizationId String
+  scheduleId     String?
+  type           String   // mirrors ReportSchedule.type for ad-hoc runs
+  status         String   // "pending", "success", "failed"
+  startedAt      DateTime @default(now())
+  finishedAt     DateTime?
+  error          String?
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  schedule       ReportSchedule? @relation(fields: [scheduleId], references: [id])
+
+  @@map("report_runs")
 }
 
 // Enums
