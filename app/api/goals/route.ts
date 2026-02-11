@@ -17,6 +17,8 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get("userId")
     const type = searchParams.get("type") as "objective" | "key_result" | null
     const status = searchParams.get("status") as "draft" | "active" | "completed" | "at_risk" | "archived" | null
+    const level = searchParams.get("level") as "personal" | "team" | "company" | null
+    const teamId = searchParams.get("teamId")
 
     // Build where clause
     const where: any = {
@@ -34,6 +36,14 @@ export async function GET(request: NextRequest) {
 
     if (status) {
       where.status = status
+    }
+
+    if (level) {
+      where.level = level
+    }
+
+    if (teamId) {
+      where.teamId = teamId
     }
 
     const goals = await prisma.goal.findMany({
@@ -82,7 +92,7 @@ export async function GET(request: NextRequest) {
         title: goal.title,
         description: goal.description || undefined,
         type: goal.type,
-        level: "personal", // Default level, could be enhanced based on department/company logic
+        level: goal.level || "personal", // Use actual level from database
         targetValue: goal.targetValue || undefined,
         currentValue: goal.currentValue,
         unit: goal.unit || undefined,
@@ -140,6 +150,7 @@ export async function POST(request: NextRequest) {
         title: createData.title,
         description: createData.description,
         type: createData.type,
+        level: createData.level || "personal", // Set goal level
         targetValue: createData.targetValue,
         currentValue: 0, // Start at 0
         unit: createData.unit,
@@ -149,6 +160,7 @@ export async function POST(request: NextRequest) {
         status: "draft", // New goals start as draft
         ownerId: createData.ownerId || user.id, // Default to current user if not specified
         parentGoalId: createData.parentGoalId,
+        teamId: (createData as any).teamId, // Set team association if provided
       },
       include: {
         owner: {
@@ -180,7 +192,7 @@ export async function POST(request: NextRequest) {
       title: newGoal.title,
       description: newGoal.description || undefined,
       type: newGoal.type,
-      level: "personal",
+      level: newGoal.level || "personal",
       targetValue: newGoal.targetValue || undefined,
       currentValue: newGoal.currentValue,
       unit: newGoal.unit || undefined,

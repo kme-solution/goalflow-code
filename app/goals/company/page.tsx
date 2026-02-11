@@ -13,6 +13,9 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Building2, CalendarDays, Shield, Info, Crown } from "lucide-react"
 import { useGoalPermissions, getRoleDisplayInfo, type CurrentUser } from "@/lib/hooks/useGoalPermissions"
+import { useGoals } from "@/lib/hooks/use-goals"
+import { useAuth } from "@/components/auth-provider"
+import type { ConfidenceLevel, GoalStatus as APIGoalStatus } from "@/lib/types/goal.types"
 
 // Simulated current user - in production this comes from auth context
 // Change role to test: "employee", "team_lead", "manager", "vp", "ceo", "cto", "coo", "cfo"
@@ -192,8 +195,28 @@ const alignmentData: AlignedGoal[] = [
 ]
 
 export default function CompanyGoalsPage() {
+  const { user } = useAuth()
   const permissions = useGoalPermissions(currentUser)
   const roleInfo = getRoleDisplayInfo(currentUser.role)
+  
+  // Fetch company goals from API
+  const { goals: apiGoals, isLoading, isError, createGoal, updateGoal, deleteGoal } = useGoals(undefined, undefined, undefined, "company")
+  
+  // Transform API goals to component format
+  const transformedGoals: GoalData[] = useMemo(() =>
+    apiGoals.map((goal): GoalData => ({
+      id: goal.id,
+      title: goal.title,
+      description: goal.description || "",
+      progress: goal.progress,
+      status: (goal.status === "active" ? "on_track" : goal.status === "at_risk" ? "at_risk" : goal.status === "completed" ? "completed" : goal.status === "draft" ? "draft" : "on_track") as GoalStatus,
+      priority: (goal.confidence >= 8 ? "critical" : goal.confidence >= 7 ? "high" : goal.confidence >= 5 ? "medium" : "low") as any,
+      dueDate: goal.endDate,
+      owner: goal.ownerName,
+      ownerId: goal.ownerId,
+      alignedGoals: goal.childGoalIds?.length || 0,
+    })), [apiGoals]
+  )
   
   const [goals, setGoals] = useState<GoalData[]>(initialGoals)
   const [searchQuery, setSearchQuery] = useState("")
@@ -201,22 +224,25 @@ export default function CompanyGoalsPage() {
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("all")
   const [viewMode, setViewMode] = useState<ViewMode>("cards")
   
+  // Use API goals if available, fallback to local state
+  const displayGoals = transformedGoals.length > 0 ? transformedGoals : goals
+  
   // Edit dialog state
   const [editingGoal, setEditingGoal] = useState<GoalData | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
   // Calculate stats
   const stats = useMemo(() => {
-    const total = goals.length
-    const completed = goals.filter((g) => g.status === "completed").length
-    const atRisk = goals.filter((g) => g.status === "at_risk").length
-    const avgProgress = Math.round(goals.reduce((sum, g) => sum + g.progress, 0) / total) || 0
+    const total = displayGoals.length
+    const completed = displayGoals.filter((g) => g.status === "completed").length
+    const atRisk = displayGoals.filter((g) => g.status === "at_risk").length
+    const avgProgress = Math.round(displayGoals.reduce((sum, g) => sum + g.progress, 0) / total) || 0
     return { total, completed, atRisk, avgProgress }
-  }, [goals])
+  }, [displayGoals])
 
   // Filter goals
   const filteredGoals = useMemo(() => {
-    return goals.filter((goal) => {
+    return displayGoals.filter((goal) => {
       const matchesSearch =
         goal.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         goal.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -225,36 +251,31 @@ export default function CompanyGoalsPage() {
       const matchesPriority = priorityFilter === "all" || goal.priority === priorityFilter
       return matchesSearch && matchesStatus && matchesPriority
     })
-  }, [goals, searchQuery, statusFilter, priorityFilter])
+  }, [displayGoals, searchQuery, statusFilter, priorityFilter])
 
   const handleCreateGoal = async (data: NewGoalData) => {
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    if (!user) return
 
-    const newGoal: GoalData = {
-      id: `goal-${Date.now()}`,
+    const createData = {
       title: data.title,
       description: data.description,
-      progress: 0,
-      status: "on_track",
-      priority: data.priority,
-      dueDate: data.dueDate
-        ? data.dueDate.toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })
-        : undefined,
-      owner: data.assigneeId 
-        ? executives.find(e => e.id === data.assigneeId)?.name || "Executive Team"
-        : "Executive Team",
-      ownerId: data.assigneeId || currentUser.id,
-      alignedGoals: 0,
+      type: "objective" as const,
+      level: "company" as const,
+      startDate: new Date().toISOString(),
+      endDate: data.dueDate ? new Date(data.dueDate).toISOString() : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+      ownerId: data.assigneeId || user.id,
+      confidenceLevel: (data.priority === "critical" ? "green" : data.priority === "high" ? "green" : data.priority === "medium" ? "yellow" : "red") as ConfidenceLevel,
     }
 
-    setGoals([newGoal, ...goals])
+    const result = await createGoal(createData)
+    if (!result.success) {
+      console.error("Failed to create goal:", result.error)
+    }
   }
 
   const handleUpdateProgress = (goalId: string, progress: number) => {
+    // Note: Progress updates would need a separate endpoint
+    // For now, optimistically update the local state
     setGoals(
       goals.map((goal) => {
         if (goal.id === goalId) {
@@ -273,16 +294,60 @@ export default function CompanyGoalsPage() {
   }
 
   const handleSaveGoal = async (updatedGoal: GoalData) => {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    setGoals(goals.map((g) => (g.id === updatedGoal.id ? updatedGoal : g)))
+    const updateData = {
+      title: updatedGoal.title,
+      description: updatedGoal.description,
+      endDate: updatedGoal.dueDate || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+      status: (updatedGoal.status === "on_track" ? "active" : updatedGoal.status === "at_risk" ? "at_risk" : updatedGoal.status === "completed" ? "completed" : "draft") as APIGoalStatus,
+    }
+
+    const result = await updateGoal(updatedGoal.id, updateData)
+    if (result.success) {
+      setIsEditDialogOpen(false)
+      setEditingGoal(null)
+    }
   }
 
-  const handleDeleteGoal = (goalId: string) => {
-    setGoals(goals.filter((g) => g.id !== goalId))
+  const handleDeleteGoal = async (goalId: string) => {
+    const result = await deleteGoal(goalId)
+    if (!result.success) {
+      console.error("Failed to delete goal:", result.error)
+    }
   }
 
-  const handleArchiveGoal = (goalId: string) => {
-    setGoals(goals.filter((g) => g.id !== goalId))
+  const handleArchiveGoal = async (goalId: string) => {
+    const result = await deleteGoal(goalId)
+    if (!result.success) {
+      console.error("Failed to archive goal:", result.error)
+    }
+  }
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-6 p-4 md:p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-muted-foreground">Loading company goals...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error state
+  if (isError) {
+    return (
+      <div className="space-y-6 p-4 md:p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="text-red-600 mb-2">Failed to load company goals</div>
+            <p className="text-muted-foreground">Please try refreshing the page</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -365,16 +430,16 @@ export default function CompanyGoalsPage() {
       {/* Goals Display */}
       {filteredGoals.length === 0 ? (
         <GoalEmptyState
-          title={goals.length === 0 ? "No company goals yet" : "No matching goals"}
+          title={displayGoals.length === 0 ? "No company goals yet" : "No matching goals"}
           description={
-            goals.length === 0
+            displayGoals.length === 0
               ? permissions.canCreateCompanyGoals
                 ? "Define your organization's strategic objectives to align all teams."
                 : "Company leadership will set strategic objectives here soon."
               : "Try adjusting your filters or search query to find what you're looking for."
           }
           actionLabel={permissions.canCreateCompanyGoals ? "Create Company Goal" : undefined}
-          onAction={goals.length === 0 && permissions.canCreateCompanyGoals ? () => {} : undefined}
+          onAction={displayGoals.length === 0 && permissions.canCreateCompanyGoals ? () => { } : undefined}
         />
       ) : viewMode === "alignment" ? (
         <div className="space-y-4">
