@@ -76,6 +76,7 @@ export interface CreateGoalRequest {
   contributors?: string[]
   parentGoalId?: string
   confidenceLevel?: ConfidenceLevel
+  teamId?: string
 }
 
 export interface UpdateGoalRequest extends Partial<CreateGoalRequest> {

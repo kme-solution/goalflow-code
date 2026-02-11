@@ -25,11 +25,13 @@ const fetcher = async (url: string) => {
   return response.json()
 }
 
-export function useGoals(userId?: string, type?: string, status?: string) {
+export function useGoals(userId?: string, type?: string, status?: string, level?: string, teamId?: string) {
   const params = new URLSearchParams()
   if (userId) params.append("userId", userId)
   if (type) params.append("type", type)
   if (status) params.append("status", status)
+  if (level) params.append("level", level)
+  if (teamId) params.append("teamId", teamId)
 
   const { data, error, isLoading, mutate } = useSWR<GoalListResponse>(
     `/api/goals${params.toString() ? `?${params.toString()}` : ""}`,

@@ -138,6 +138,7 @@ model Goal {
   title          String
   description    String?
   type           GoalType
+  level          GoalLevel @default(personal)
   targetValue    Float?
   currentValue   Float      @default(0)
   unit           String?
@@ -161,6 +162,8 @@ model Goal {
   childRelationships GoalRelationship[] @relation("GoalRelationshipsChild")
   department     Department?      @relation(fields: [departmentId], references: [id])
   departmentId   String?
+  team           Team?            @relation(fields: [teamId], references: [id])
+  teamId         String?
 
   @@map("goals")
 }
@@ -302,6 +305,12 @@ enum TeamType {
 enum GoalType {
   objective
   key_result
+}
+
+enum GoalLevel {
+  personal
+  team
+  company
 }
 
 enum GoalStatus {

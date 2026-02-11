@@ -61,7 +61,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             title: goal.title,
             description: goal.description || undefined,
             type: goal.type,
-            level: "personal" as const, // Default level
+            level: goal.level || "personal" as const, // Use actual level from database
             targetValue: goal.targetValue || undefined,
             currentValue: goal.currentValue,
             unit: goal.unit || undefined,
