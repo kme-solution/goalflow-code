@@ -166,6 +166,25 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Transform to match the expected Recognition type
+    const transformedRecognition: Recognition = {
+      id: newRecognition.id,
+      fromUserId: newRecognition.fromUserId,
+      fromUserName: newRecognition.fromUser.name,
+      fromUserAvatar: newRecognition.fromUser.avatar || undefined,
+      toUserId: newRecognition.toUserId,
+      toUserName: newRecognition.toUser.name,
+      toUserAvatar: newRecognition.toUser.avatar || undefined,
+      type: newRecognition.type,
+      badge: newRecognition.badge as "team_player" | "innovator" | "mentor" | "leader" | "achiever" | "helper",
+      message: newRecognition.message,
+      isPublic: newRecognition.isPublic,
+      createdAt: newRecognition.createdAt.toISOString(),
+      likes: newRecognition.likes,
+      likedBy: [],
+      comments: [],
+    }
+
     // Create notification for the recipient
     const notification = await prisma.notification.create({
       data: {
@@ -203,25 +222,6 @@ export async function POST(request: NextRequest) {
       type: "recognition",
       data: transformedRecognition,
     })
-
-    // Transform to match the expected Recognition type
-    const transformedRecognition: Recognition = {
-      id: newRecognition.id,
-      fromUserId: newRecognition.fromUserId,
-      fromUserName: newRecognition.fromUser.name,
-      fromUserAvatar: newRecognition.fromUser.avatar || undefined,
-      toUserId: newRecognition.toUserId,
-      toUserName: newRecognition.toUser.name,
-      toUserAvatar: newRecognition.toUser.avatar || undefined,
-      type: newRecognition.type,
-      badge: newRecognition.badge as "team_player" | "innovator" | "mentor" | "leader" | "achiever" | "helper",
-      message: newRecognition.message,
-      isPublic: newRecognition.isPublic,
-      createdAt: newRecognition.createdAt.toISOString(),
-      likes: newRecognition.likes,
-      likedBy: [],
-      comments: [],
-    }
 
     return NextResponse.json({
       success: true,

@@ -9,7 +9,7 @@ export function useRecognitions(type?: "given" | "received" | "all", badge?: str
   if (badge) params.append("badge", badge)
 
   const { data, error, isLoading, mutate } = useSWR<RecognitionListResponse>(
-    `/api/recognition${params.toString() ? `?${params.toString()}` : ""}`,
+    `/api/recognitions${params.toString() ? `?${params.toString()}` : ""}`,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -21,7 +21,7 @@ export function useRecognitions(type?: "given" | "received" | "all", badge?: str
 
   const createRecognition = async (payload: CreateRecognitionRequest) => {
     try {
-      const response = await fetch("/api/recognition", {
+      const response = await fetch("/api/recognitions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -40,7 +40,7 @@ export function useRecognitions(type?: "given" | "received" | "all", badge?: str
 
   const updateRecognition = async (id: string, payload: Partial<CreateRecognitionRequest>) => {
     try {
-      const response = await fetch(`/api/recognition/${id}`, {
+      const response = await fetch(`/api/recognitions/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -59,7 +59,7 @@ export function useRecognitions(type?: "given" | "received" | "all", badge?: str
 
   const deleteRecognition = async (id: string) => {
     try {
-      const response = await fetch(`/api/recognition/${id}`, {
+      const response = await fetch(`/api/recognitions/${id}`, {
         method: "DELETE",
       })
 
@@ -76,7 +76,7 @@ export function useRecognitions(type?: "given" | "received" | "all", badge?: str
 
   const likeRecognition = async (id: string) => {
     try {
-      const response = await fetch(`/api/recognition/${id}/like`, {
+      const response = await fetch(`/api/recognitions/${id}/like`, {
         method: "POST",
       })
 
@@ -93,7 +93,7 @@ export function useRecognitions(type?: "given" | "received" | "all", badge?: str
 
   const unlikeRecognition = async (id: string) => {
     try {
-      const response = await fetch(`/api/recognition/${id}/like`, {
+      const response = await fetch(`/api/recognitions/${id}/like`, {
         method: "DELETE",
       })
 
