@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { getUserFromToken } from "@/lib/auth"
+import { getUserFromToken } from "@/lib/auth.server"
 import type { AnalyticsResponse, PerformanceMetrics, DepartmentPerformance, EngagementData } from "@/lib/types/analytics.types"
 
 export async function GET(request: NextRequest) {
   try {
     const user = await getUserFromToken(request)
+    console.log("Authenticated user in analytics route:", user)
     if (!user) {
       return NextResponse.json<AnalyticsResponse>(
         { success: false, error: "Unauthorized" },

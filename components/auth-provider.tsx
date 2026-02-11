@@ -26,8 +26,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const session = getSession()
     if (session) {
       setUser(session.user)
+      setLoading(false)
+    } else {
+      // Auto-login test user for development
+      const autoLogin = async () => {
+        try {
+          const response = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: "employee@goalflow.com",
+              password: "password123"
+            }),
+          })
+
+          const data = await response.json()
+
+          if (data.success && data.user && data.token) {
+            const session = {
+              user: data.user,
+              token: data.token,
+              expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+            }
+            setSession(session)
+            setUser(data.user)
+          }
+        } catch (error) {
+          console.error("Auto-login failed:", error)
+        } finally {
+          setLoading(false)
+        }
+      }
+
+      autoLogin()
     }
-    setLoading(false)
   }, [])
 
   const login = async (email: string, password: string) => {

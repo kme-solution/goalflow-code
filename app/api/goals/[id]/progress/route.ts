@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { getUserFromToken } from "@/lib/auth"
+import { getUserFromToken } from "@/lib/auth.server"
 import { detectGoalRisk, getConfidenceLevel } from "@/lib/utils/goal-calculations"
 import type { GoalProgress } from "@/lib/types/goal.types"
 import { broadcastToUser } from "@/app/api/people/[userId]/websocket/route"

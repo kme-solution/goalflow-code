@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { getUserFromToken } from "@/lib/auth"
+import { getUserFromToken } from "@/lib/auth.server"
 import type { RecognitionListResponse, Recognition, CreateRecognitionRequest } from "@/lib/types/recognition.types"
 import { broadcastToUser } from "@/app/api/people/[userId]/websocket/route"
 

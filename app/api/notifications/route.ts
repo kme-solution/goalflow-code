@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { getUserFromToken } from "@/lib/auth"
+import { getUserFromToken } from "@/lib/auth.server"
 import type { NotificationListResponse, Notification } from "@/lib/types/notification.types"
 
 export async function GET(request: NextRequest) {

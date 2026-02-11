@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { getUserFromToken } from "@/lib/auth"
-import type { GoalListResponse, Goal } from "@/lib/types/goal.types"
+import { getUserFromToken } from "@/lib/auth.server"
+import type { GoalListResponse, Goal, CreateGoalRequest } from "@/lib/types/goal.types"
 
 export async function GET(request: NextRequest) {
   try {
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
         title: goal.title,
         description: goal.description || undefined,
         type: goal.type,
-        level: "personal" as const, // Default level, could be enhanced based on department/company logic
+        level: "personal", // Default level, could be enhanced based on department/company logic
         targetValue: goal.targetValue || undefined,
         currentValue: goal.currentValue,
         unit: goal.unit || undefined,
@@ -120,5 +120,91 @@ export async function GET(request: NextRequest) {
       },
       { status: 500 },
     )
+  }
+}
+
+// POST /api/goals - Create a new goal
+export async function POST(request: NextRequest) {
+  try {
+    const user = await getUserFromToken(request)
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
+    }
+
+    const createData: CreateGoalRequest = await request.json()
+
+    // Create the goal
+    const newGoal = await prisma.goal.create({
+      data: {
+        organizationId: user.organizationId,
+        title: createData.title,
+        description: createData.description,
+        type: createData.type,
+        targetValue: createData.targetValue,
+        currentValue: 0, // Start at 0
+        unit: createData.unit,
+        confidence: createData.confidenceLevel ? (createData.confidenceLevel === "green" ? 8 : createData.confidenceLevel === "yellow" ? 5 : 3) : 5,
+        startDate: createData.startDate ? new Date(createData.startDate) : new Date(),
+        endDate: new Date(createData.endDate),
+        status: "draft", // New goals start as draft
+        ownerId: createData.ownerId || user.id, // Default to current user if not specified
+        parentGoalId: createData.parentGoalId,
+      },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        parentGoal: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+        childGoals: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+          },
+        },
+      },
+    })
+
+    // Transform to match Goal type
+    const transformedGoal: Goal = {
+      id: newGoal.id,
+      organizationId: newGoal.organizationId,
+      title: newGoal.title,
+      description: newGoal.description || undefined,
+      type: newGoal.type,
+      level: "personal",
+      targetValue: newGoal.targetValue || undefined,
+      currentValue: newGoal.currentValue,
+      unit: newGoal.unit || undefined,
+      confidence: newGoal.confidence,
+      confidenceLevel: newGoal.confidence >= 7 ? "green" : newGoal.confidence >= 4 ? "yellow" : "red",
+      startDate: newGoal.startDate?.toISOString() || "",
+      endDate: newGoal.endDate.toISOString(),
+      status: newGoal.status,
+      ownerId: newGoal.ownerId,
+      ownerName: newGoal.owner.name,
+      contributors: [],
+      parentGoalId: newGoal.parentGoalId || undefined,
+      childGoalIds: newGoal.childGoals.map(child => child.id),
+      relatedGoalIds: [],
+      dependencies: [],
+      progress: newGoal.targetValue ? Math.round((newGoal.currentValue / newGoal.targetValue) * 100) : 0,
+      riskLevel: "low_risk" as const,
+      createdAt: newGoal.createdAt.toISOString(),
+      updatedAt: newGoal.updatedAt.toISOString(),
+    }
+
+    return NextResponse.json({ success: true, goal: transformedGoal }, { status: 201 })
+  } catch (error) {
+    console.error("Create goal error:", error)
+    return NextResponse.json({ success: false, error: "Failed to create goal" }, { status: 500 })
   }
 }
