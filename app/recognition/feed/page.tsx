@@ -1,7 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { useAuth } from "@/lib/auth"
+import { useAuth } from "@/components/auth-provider"
+import { useRecognitions } from "@/lib/hooks/use-recognition"
+import { useMemo } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -209,28 +211,50 @@ const topRecognized = [
 
 export default function RecognitionFeedPage() {
   const { user } = useAuth()
-  const [recognitions, setRecognitions] = useState(mockRecognitions)
+  const { recognitions: apiRecognitions, isLoading, isError, likeRecognition, unlikeRecognition } = useRecognitions()
   const [searchQuery, setSearchQuery] = useState("")
   const [filterBadge, setFilterBadge] = useState("all")
   const [sortBy, setSortBy] = useState("recent")
+  
+  // Use API recognitions if available, fallback to mock data
+  const recognitions = useMemo(() => {
+    if (apiRecognitions.length > 0) {
+      return apiRecognitions.map((r) => ({
+        id: r.id,
+        from: {
+          name: r.fromUserName,
+          avatar: r.fromUserAvatar,
+          initials: r.fromUserName.split(" ").map(n => n[0]).join(""),
+          role: "Team Member",
+          department: "Team",
+        },
+        to: {
+          name: r.toUserName,
+          avatar: r.toUserAvatar,
+          initials: r.toUserName.split(" ").map(n => n[0]).join(""),
+          role: "Team Member",
+          department: "Team",
+        },
+        badge: r.badge,
+        message: r.message,
+        timestamp: new Date(r.createdAt).toLocaleDateString(),
+        reactions: { hearts: r.likes, celebrates: 0, fires: 0 },
+        comments: 0,
+        isLiked: false,
+      }))
+    }
+    return mockRecognitions
+  }, [apiRecognitions])
 
-  const handleLike = (recognitionId: string) => {
-    setRecognitions(prev =>
-      prev.map(recognition =>
-        recognition.id === recognitionId
-          ? {
-              ...recognition,
-              isLiked: !recognition.isLiked,
-              reactions: {
-                ...recognition.reactions,
-                hearts: recognition.isLiked
-                  ? recognition.reactions.hearts - 1
-                  : recognition.reactions.hearts + 1,
-              },
-            }
-          : recognition
-      )
-    )
+  const handleLike = async (recognitionId: string) => {
+    const recognition = recognitions.find(r => r.id === recognitionId)
+    if (!recognition) return
+    
+    if (recognition.isLiked) {
+      await unlikeRecognition(recognitionId)
+    } else {
+      await likeRecognition(recognitionId)
+    }
   }
 
   const getBadgeConfig = (badgeId: string) => {
@@ -249,6 +273,28 @@ export default function RecognitionFeedPage() {
     const matchesBadge = filterBadge === "all" || recognition.badge === filterBadge
     return matchesSearch && matchesBadge
   })
+
+  if (isLoading && apiRecognitions.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Loading recognition feed...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 mb-2">Failed to load recognition feed</div>
+          <p className="text-muted-foreground">Please try refreshing the page</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen">
