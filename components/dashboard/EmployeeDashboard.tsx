@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { 
-  Target, 
-  TrendingUp, 
-  CheckCircle2, 
+import {
+  Target,
+  TrendingUp,
+  CheckCircle2,
   Clock,
   Star,
   TrendingDown,
@@ -53,43 +53,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-
-// Mock data - replace with real API calls
-const weeklyProgressData = [
-  { day: 'Mon', progress: 45 },
-  { day: 'Tue', progress: 60 },
-  { day: 'Wed', progress: 75 },
-  { day: 'Thu', progress: 82 },
-  { day: 'Fri', progress: 90 },
-  { day: 'Sat', progress: 92 },
-  { day: 'Sun', progress: 95 },
-]
-
-const recognitionTypes = [
-  { name: 'Excellent Work', value: 45, color: '#10b981' },
-  { name: 'Team Player', value: 25, color: '#3b82f6' },
-  { name: 'Innovation', value: 20, color: '#8b5cf6' },
-  { name: 'Leadership', value: 10, color: '#f59e0b' },
-]
-
-const recentRecognitions = [
-  { id: 1, from: "Alex Chen", message: "Great work on the Q3 presentation!", type: "excellent", date: "2 hours ago", emoji: "👏" },
-  { id: 2, from: "Sarah Miller", message: "Thanks for helping with the client demo!", type: "team", date: "Yesterday", emoji: "🤝" },
-  { id: 3, from: "Jamie Wilson", message: "Your solution saved us hours of work!", type: "innovation", date: "2 days ago", emoji: "💡" },
-]
-
-const teamUpdates = [
-  { id: 1, user: "Mike Johnson", action: "completed", target: "Q4 Planning Doc", time: "30 min ago" },
-  { id: 2, user: "Lisa Wang", action: "received", target: "Spot Award", time: "1 hour ago" },
-  { id: 3, user: "Team Alpha", action: "achieved", target: "Monthly Target", time: "2 hours ago" },
-]
-
-const goalCategories = [
-  { category: "Professional", count: 3, color: "#3b82f6" },
-  { category: "Skills", count: 2, color: "#10b981" },
-  { category: "Project", count: 4, color: "#8b5cf6" },
-  { category: "Personal", count: 1, color: "#f59e0b" },
-]
+import { useGoals } from "@/lib/hooks/use-goals"
+import { useEmployees } from "@/lib/hooks/use-employees"
+import { useRecognitions } from "@/lib/hooks/use-recognitions"
 
 const COLORS = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b']
 
@@ -97,23 +63,16 @@ export default function EmployeeDashboard({ userId }: { userId: string }) {
   const [activeTab, setActiveTab] = useState("overview")
   const [loading, setLoading] = useState(false)
   const [quickCheckIn, setQuickCheckIn] = useState(false)
-  
-  // Mock data - replace with your actual hooks
-  const goals = [
-    { id: 1, title: "Complete React Certification", progress: 75, dueDate: "2024-12-15", priority: "high" },
-    { id: 2, title: "Lead Q4 Project Kickoff", progress: 30, dueDate: "2024-11-30", priority: "medium" },
-    { id: 3, title: "Improve Code Review Time", progress: 90, dueDate: "2024-11-20", priority: "low" },
-  ]
-  
-  const reviews = [
-    { id: 1, type: "Quarterly Review", scheduledDate: "2024-12-10", status: "pending" },
-    { id: 2, type: "360 Feedback", scheduledDate: "2024-11-25", status: "in-progress" },
-  ]
 
-  const activeGoals = goals.filter(g => g.progress < 100).length
-  const completedGoals = goals.filter(g => g.progress === 100).length
-  const avgProgress = goals.length > 0 ? Math.round(goals.reduce((acc, g) => acc + g.progress, 0) / goals.length) : 0
-  const pendingReviews = reviews.filter(r => r.status === "pending").length
+  // Fetch real data using hooks
+  const { goals: userGoals, isLoading: goalsLoading } = useGoals(userId)
+  const { employees: teamMembers, isLoading: employeesLoading } = useEmployees()
+  const { recognitions, isLoading: recognitionsLoading } = useRecognitions(userId)
+
+  // Calculate derived data from real goals
+  const activeGoals = userGoals.filter(g => g.status !== 'completed').length
+  const completedGoals = userGoals.filter(g => g.status === 'completed').length
+  const avgProgress = userGoals.length > 0 ? Math.round(userGoals.reduce((acc, g) => acc + (g.targetValue ? (g.currentValue / g.targetValue) * 100 : 0), 0) / userGoals.length) : 0
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -133,10 +92,10 @@ export default function EmployeeDashboard({ userId }: { userId: string }) {
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Welcome back, Alex!</h1>
             <p className="text-gray-600 mt-1">Here's your work overview for today</p>
           </div>
-          
+
           <div className="flex items-center gap-3">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               className="border-emerald-200 bg-emerald-50 hover:bg-emerald-100"
             >
@@ -144,8 +103,8 @@ export default function EmployeeDashboard({ userId }: { userId: string }) {
               <span className="hidden sm:inline">Notifications</span>
               <Badge variant="destructive" className="ml-2">3</Badge>
             </Button>
-            
-            <Button 
+
+            <Button
               onClick={() => setQuickCheckIn(true)}
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
             >
@@ -264,7 +223,7 @@ export default function EmployeeDashboard({ userId }: { userId: string }) {
                   <TabsTrigger value="completed">Completed</TabsTrigger>
                   <TabsTrigger value="categories">Categories</TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="active" className="space-y-4">
                   {goals.map((goal) => (
                     <div key={goal.id} className="p-4 border rounded-lg hover:border-blue-300 transition-colors">
@@ -299,7 +258,7 @@ export default function EmployeeDashboard({ userId }: { userId: string }) {
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-gray-600">Progress</span>
@@ -307,7 +266,7 @@ export default function EmployeeDashboard({ userId }: { userId: string }) {
                         </div>
                         <Progress value={goal.progress} className="h-2" />
                       </div>
-                      
+
                       <div className="flex items-center justify-between mt-3">
                         <Button variant="ghost" size="sm">
                           <MessageSquare className="h-4 w-4 mr-1" />
@@ -327,7 +286,7 @@ export default function EmployeeDashboard({ userId }: { userId: string }) {
                     </div>
                   ))}
                 </TabsContent>
-                
+
                 <TabsContent value="categories">
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
@@ -352,7 +311,7 @@ export default function EmployeeDashboard({ userId }: { userId: string }) {
                   </div>
                 </TabsContent>
               </Tabs>
-              
+
               <Button variant="outline" className="w-full mt-4">
                 View All Goals
                 <ChevronRight className="h-4 w-4 ml-2" />
@@ -373,14 +332,14 @@ export default function EmployeeDashboard({ userId }: { userId: string }) {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="day" stroke="#6b7280" />
                     <YAxis stroke="#6b7280" />
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value) => [`${value}%`, 'Progress']}
                       labelFormatter={(label) => `Day: ${label}`}
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="progress" 
-                      stroke="#3b82f6" 
+                    <Line
+                      type="monotone"
+                      dataKey="progress"
+                      stroke="#3b82f6"
                       strokeWidth={3}
                       dot={{ r: 4 }}
                       activeDot={{ r: 6 }}
@@ -388,7 +347,7 @@ export default function EmployeeDashboard({ userId }: { userId: string }) {
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-              
+
               <div className="grid grid-cols-3 gap-4 mt-6">
                 <div className="text-center p-3 bg-blue-50 rounded-lg">
                   <div className="text-2xl font-bold text-blue-700">45%</div>
@@ -462,12 +421,10 @@ export default function EmployeeDashboard({ userId }: { userId: string }) {
               {reviews.map((review) => (
                 <div key={review.id} className="p-3 border rounded-lg hover:border-blue-300 transition-colors">
                   <div className="flex items-start gap-3">
-                    <div className={`p-2 rounded-lg ${
-                      review.status === 'pending' ? 'bg-amber-100' : 'bg-blue-100'
-                    }`}>
-                      <Clock className={`h-4 w-4 ${
-                        review.status === 'pending' ? 'text-amber-600' : 'text-blue-600'
-                      }`} />
+                    <div className={`p-2 rounded-lg ${review.status === 'pending' ? 'bg-amber-100' : 'bg-blue-100'
+                      }`}>
+                      <Clock className={`h-4 w-4 ${review.status === 'pending' ? 'text-amber-600' : 'text-blue-600'
+                        }`} />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
@@ -477,7 +434,7 @@ export default function EmployeeDashboard({ userId }: { userId: string }) {
                         </Badge>
                       </div>
                       <p className="text-sm text-gray-600 mt-1">
-                        Scheduled: {new Date(review.scheduledDate).toLocaleDateString('en-US', { 
+                        Scheduled: {new Date(review.scheduledDate).toLocaleDateString('en-US', {
                           weekday: 'short',
                           month: 'short',
                           day: 'numeric'
@@ -572,7 +529,7 @@ export default function EmployeeDashboard({ userId }: { userId: string }) {
                   </Button>
                 ))}
               </div>
-              <textarea 
+              <textarea
                 placeholder="Any notes for today?"
                 className="w-full h-32 p-3 border rounded-lg"
               />

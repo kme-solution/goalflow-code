@@ -55,46 +55,56 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-
-// Mock data - replace with real API calls
-const companyHealthData = [
-  { month: 'Jan', engagement: 7.8, performance: 7.5, retention: 8.2 },
-  { month: 'Feb', engagement: 8.1, performance: 7.8, retention: 8.4 },
-  { month: 'Mar', engagement: 8.3, performance: 8.0, retention: 8.5 },
-  { month: 'Apr', engagement: 8.2, performance: 8.1, retention: 8.6 },
-  { month: 'May', engagement: 8.4, performance: 8.3, retention: 8.7 },
-  { month: 'Jun', engagement: 8.5, performance: 8.4, retention: 8.8 },
-]
-
-const departmentPerformance = [
-  { department: 'Engineering', goals: 85, engagement: 8.7, budget: 95 },
-  { department: 'Sales', goals: 92, engagement: 8.3, budget: 110 },
-  { department: 'Marketing', goals: 78, engagement: 8.0, budget: 102 },
-  { department: 'HR', goals: 88, engagement: 8.9, budget: 97 },
-  { department: 'Product', goals: 90, engagement: 8.5, budget: 99 },
-  { department: 'Finance', goals: 96, engagement: 8.6, budget: 96 },
-]
-
-const strategicGoalsData = [
-  { category: 'Revenue Growth', completed: 75, total: 100, trend: 'up' },
-  { category: 'Market Expansion', completed: 45, total: 100, trend: 'up' },
-  { category: 'Employee Retention', completed: 82, total: 100, trend: 'stable' },
-  { category: 'Product Innovation', completed: 68, total: 100, trend: 'up' },
-  { category: 'Customer Satisfaction', completed: 91, total: 100, trend: 'down' },
-]
-
-const culturalMetrics = [
-  { name: 'Recognition Rate', value: 78, color: '#10b981' },
-  { name: 'Cross-team Collab', value: 65, color: '#3b82f6' },
-  { name: 'Feedback Response', value: 82, color: '#8b5cf6' },
-  { name: 'Meeting Efficiency', value: 56, color: '#f59e0b' },
-]
+import { useAnalytics } from "@/lib/hooks/use-analytics"
+import { useGoals } from "@/lib/hooks/use-goals"
 
 const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b'];
 
 export default function ExecutiveDashboard() {
   const [timeRange, setTimeRange] = useState('quarter')
-  const [loading, setLoading] = useState(false)
+  const { metrics, departmentPerformance, engagement, isLoading, isError } = useAnalytics()
+  const { goals: strategicGoals, isLoading: goalsLoading } = useGoals(undefined, "objective")
+
+  // Transform department performance data for charts
+  const chartData = departmentPerformance?.map(dept => ({
+    department: dept.name,
+    goals: dept.goalCompletionRate,
+    engagement: dept.avgPerformanceScore,
+  })) || []
+
+  // Transform engagement trends for line chart
+  const healthData = engagement?.trends?.map(trend => ({
+    month: new Date(trend.date).toLocaleDateString('en-US', { month: 'short' }),
+    engagement: trend.score,
+    performance: trend.score * 0.9, // Placeholder - adjust based on actual data
+    retention: trend.score * 0.95, // Placeholder - adjust based on actual data
+  })) || []
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white p-4 md:p-6 lg:p-8">
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-24 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white p-4 md:p-6 lg:p-8">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Failed to load dashboard</h2>
+          <p className="text-gray-600">Please try refreshing the page</p>
+        </div>
+      </div>
+    )
+  }
 
   // Quick actions
   const quickActions = [
@@ -145,14 +155,14 @@ export default function ExecutiveDashboard() {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center justify-between">
                 <span className="text-gray-600">Company Health</span>
-                <Badge variant="outline" className="bg-blue-50 text-blue-700">8.2/10</Badge>
+                <Badge variant="outline" className="bg-blue-50 text-blue-700">{metrics?.overallScore || 0}/10</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-2xl font-bold text-gray-900">+12.5%</div>
-                  <div className="text-sm text-gray-500">vs last quarter</div>
+                  <div className="text-2xl font-bold text-gray-900">{metrics?.goalCompletionRate || 0}%</div>
+                  <div className="text-sm text-gray-500">Goal completion</div>
                 </div>
                 <TrendingUp className="h-8 w-8 text-green-500" />
               </div>
@@ -163,14 +173,14 @@ export default function ExecutiveDashboard() {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center justify-between">
                 <span className="text-gray-600">Strategic Goals</span>
-                <Badge variant="outline" className="bg-emerald-50 text-emerald-700">74%</Badge>
+                <Badge variant="outline" className="bg-emerald-50 text-emerald-700">{strategicGoals.length}</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-2xl font-bold text-gray-900">18/24</div>
-                  <div className="text-sm text-gray-500">On track</div>
+                  <div className="text-2xl font-bold text-gray-900">{strategicGoals.filter(g => g.status === 'completed').length}/{strategicGoals.length}</div>
+                  <div className="text-sm text-gray-500">Completed</div>
                 </div>
                 <Target className="h-8 w-8 text-emerald-500" />
               </div>
@@ -181,14 +191,14 @@ export default function ExecutiveDashboard() {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center justify-between">
                 <span className="text-gray-600">Employee Engagement</span>
-                <Badge variant="outline" className="bg-purple-50 text-purple-700">8.5/10</Badge>
+                <Badge variant="outline" className="bg-purple-50 text-purple-700">{engagement?.eNPS || 0}/10</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-2xl font-bold text-gray-900">+8.2%</div>
-                  <div className="text-sm text-gray-500">+340 points</div>
+                  <div className="text-2xl font-bold text-gray-900">{engagement?.engagementRate || 0}%</div>
+                  <div className="text-sm text-gray-500">Response rate</div>
                 </div>
                 <Users className="h-8 w-8 text-purple-500" />
               </div>
@@ -198,17 +208,17 @@ export default function ExecutiveDashboard() {
           <Card className="border-l-4 border-l-amber-500">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center justify-between">
-                <span className="text-gray-600">Revenue Impact</span>
-                <Badge variant="outline" className="bg-amber-50 text-amber-700">$4.2M</Badge>
+                <span className="text-gray-600">At Risk Goals</span>
+                <Badge variant="outline" className="bg-amber-50 text-amber-700">{metrics?.atRiskCount || 0}</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-2xl font-bold text-gray-900">+23%</div>
-                  <div className="text-sm text-gray-500">Attributed to goals</div>
+                  <div className="text-2xl font-bold text-gray-900">{metrics?.atRiskCount || 0}</div>
+                  <div className="text-sm text-gray-500">Goals at risk</div>
                 </div>
-                <DollarSign className="h-8 w-8 text-amber-500" />
+                <AlertTriangle className="h-8 w-8 text-amber-500" />
               </div>
             </CardContent>
           </Card>
@@ -244,7 +254,7 @@ export default function ExecutiveDashboard() {
             <CardContent>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <RechartsLineChart data={companyHealthData}>
+                  <RechartsLineChart data={healthData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="month" stroke="#6b7280" />
                     <YAxis stroke="#6b7280" />
@@ -281,7 +291,7 @@ export default function ExecutiveDashboard() {
             <CardContent>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={departmentPerformance}>
+                  <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="department" stroke="#6b7280" />
                     <YAxis stroke="#6b7280" />
@@ -304,22 +314,18 @@ export default function ExecutiveDashboard() {
               <CardDescription>Progress on key company objectives</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {strategicGoalsData.map((goal, index) => (
-                <div key={index} className="space-y-2">
+              {strategicGoals.slice(0, 5).map((goal) => (
+                <div key={goal.id} className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <div className="font-medium text-gray-900">{goal.category}</div>
+                    <div className="font-medium text-gray-900">{goal.title}</div>
                     <div className="flex items-center gap-2">
-                      <span className="font-bold">{goal.completed}%</span>
-                      {goal.trend === 'up' ? (
-                        <ArrowUpRight className="h-4 w-4 text-green-500" />
-                      ) : goal.trend === 'down' ? (
-                        <ArrowDownRight className="h-4 w-4 text-red-500" />
-                      ) : (
-                        <div className="h-4 w-4 text-gray-400">—</div>
-                      )}
+                      <span className="font-bold">{goal.targetValue ? Math.round((goal.currentValue / goal.targetValue) * 100) : 0}%</span>
+                      <Badge variant={goal.status === 'completed' ? 'default' : goal.status === 'at_risk' ? 'destructive' : 'secondary'}>
+                        {goal.status}
+                      </Badge>
                     </div>
                   </div>
-                  <Progress value={goal.completed} className="h-2" />
+                  <Progress value={goal.targetValue ? (goal.currentValue / goal.targetValue) * 100 : 0} className="h-2" />
                 </div>
               ))}
             </CardContent>
@@ -329,45 +335,6 @@ export default function ExecutiveDashboard() {
                 <ChevronRight className="h-4 w-4 ml-2" />
               </Button>
             </CardFooter>
-          </Card>
-
-          {/* Cultural Metrics */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Cultural Metrics</CardTitle>
-              <CardDescription>Key indicators of company culture</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartsPieChart>
-                    <Pie
-                      data={culturalMetrics}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={(entry) => `${entry.value}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {culturalMetrics.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </RechartsPieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                {culturalMetrics.map((metric, index) => (
-                  <div key={index} className="flex flex-col items-center p-3 bg-gray-50 rounded-lg">
-                    <div className="text-2xl font-bold">{metric.value}%</div>
-                    <div className="text-sm text-gray-600 text-center">{metric.name}</div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
           </Card>
 
           {/* Quick Actions */}
