@@ -1,7 +1,13 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
-export function CTASection() {
+interface CTASectionProps {
+  onLoginClick?: () => void
+}
+
+export function CTASection({ onLoginClick }: CTASectionProps) {
   return (
     <section id="cta-section" className="py-20 px-4">
       <div className="max-w-4xl mx-auto">
@@ -16,14 +22,25 @@ export function CTASection() {
             <Button asChild size="lg" className="bg-white text-primary hover:bg-white/90 text-lg px-8 py-6 shadow-lg">
               <Link href="/register">Start Free Trial</Link>
             </Button>
-            <Button
-              asChild
-              variant="outline"
-              size="lg"
-              className="border-2 border-white text-white hover:bg-white/10 text-lg px-8 py-6 bg-transparent"
-            >
-              <Link href="/login">Sign In</Link>
-            </Button>
+            {onLoginClick ? (
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={onLoginClick}
+                className="border-2 border-white text-white hover:bg-white/10 text-lg px-8 py-6 bg-transparent"
+              >
+                Sign In
+              </Button>
+            ) : (
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="border-2 border-white text-white hover:bg-white/10 text-lg px-8 py-6 bg-transparent"
+              >
+                <Link href="/login">Sign In</Link>
+              </Button>
+            )}
           </div>
           <p className="text-sm text-white/80 mt-6">Join 500+ teams already using GoalFlow Pro</p>
         </div>

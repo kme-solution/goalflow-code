@@ -6,8 +6,29 @@ import { Menu } from "lucide-react"
 import { useState } from "react"
 import { Logo } from "@/components/brand/logo"
 
-export function Navigation() {
+interface NavigationProps {
+  onLoginClick?: () => void
+}
+
+export function Navigation({ onLoginClick }: NavigationProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  const loginElement = onLoginClick ? (
+    <button
+      type="button"
+      onClick={() => {
+        onLoginClick()
+        setIsMenuOpen(false)
+      }}
+      className="text-muted-foreground hover:text-primary transition-colors"
+    >
+      Login
+    </button>
+  ) : (
+    <Link href="/login" className="text-muted-foreground hover:text-primary transition-colors">
+      Login
+    </Link>
+  )
 
   return (
     <nav className="fixed w-full bg-background/90 backdrop-blur-sm z-50 border-b border-border">
@@ -29,9 +50,7 @@ export function Navigation() {
             <a href="#testimonials" className="text-muted-foreground hover:text-primary transition-colors">
               Testimonials
             </a>
-            <Link href="/login" className="text-muted-foreground hover:text-primary transition-colors">
-              Login
-            </Link>
+            {loginElement}
             <Button asChild className="bg-primary hover:bg-primary/90">
               <Link href="/register">Start Free Trial</Link>
             </Button>
@@ -55,9 +74,19 @@ export function Navigation() {
             <a href="#testimonials" className="block text-muted-foreground hover:text-primary transition-colors">
               Testimonials
             </a>
-            <Link href="/login" className="block text-muted-foreground hover:text-primary transition-colors">
-              Login
-            </Link>
+            {onLoginClick ? (
+              <button
+                type="button"
+                onClick={() => { onLoginClick(); setIsMenuOpen(false) }}
+                className="block text-muted-foreground hover:text-primary transition-colors w-full text-left"
+              >
+                Login
+              </button>
+            ) : (
+              <Link href="/login" className="block text-muted-foreground hover:text-primary transition-colors">
+                Login
+              </Link>
+            )}
             <Button asChild className="w-full bg-primary hover:bg-primary/90">
               <Link href="/register">Start Free Trial</Link>
             </Button>
